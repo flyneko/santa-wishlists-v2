@@ -158,7 +158,7 @@ a:hover{text-decoration:underline}
 }
 .present:hover .present__name{ color:var(--red); }
 /* цена, старая цена и величина скидки — одной строкой, как в магазине */
-.present__price{ font-weight:700; font-size:16px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.present__price{ font-weight:700; font-size:16px; color:var(--green); display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
 .present__price .why{ margin-left:auto; }
 .present__price s{ font-weight:600; font-size:13px; color:var(--muted-2); text-decoration-thickness:1px; }
 .cut{
@@ -168,6 +168,8 @@ a:hover{text-decoration:underline}
 }
 .present.is-taken .cut{ background:var(--field); color:var(--muted-2); }
 .present__foot{ margin-top:auto; padding-top:12px; display:flex; flex-direction:column; gap:8px; }
+/* у карточек идей действие уехало на снимок — пустой подвал не нужен */
+.present__foot:empty{ display:none; padding:0; }
 .present__media{ position:relative; }
 .present__add{
   width:100%; height:40px; border-radius:10px;
@@ -186,9 +188,39 @@ a:hover{text-decoration:underline}
   font-size:13px; opacity:0; transition:opacity .15s;
 }
 .present:hover .present__dismiss{ opacity:1; }
+/* «Хочу» — яркая кнопка в углу снимка вместо строки-кнопки под карточкой */
+.wantbtn{
+  position:absolute; z-index:4; right:8px; bottom:8px;
+  width:44px; height:44px; border-radius:50%;
+  background:#fff; color:var(--red);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 3px 12px rgba(0,0,0,.2);
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1), background .16s, color .16s, box-shadow .16s;
+}
+.wantbtn:hover{ transform:scale(1.09); box-shadow:0 5px 18px rgba(247,79,79,.36); }
+.wantbtn:active{ transform:scale(.94); }
+.wantbtn.is-on{
+  background:linear-gradient(135deg,#FF7A7A 0%,#F74F4F 100%); color:#fff;
+  box-shadow:0 4px 16px rgba(247,79,79,.45);
+}
+/* мой вишлист: та же кнопка — «Изменить» */
+.wantbtn--edit{ color:var(--green); }
+.wantbtn--edit:hover{ box-shadow:0 5px 18px rgba(39,174,96,.34); }
+.wantbtn--edit:active{ background:var(--green); color:#fff; }
+
+/* режим «другому»: та же кнопка, но фиолетовая, как и вся подборка */
+.wantbtn--pick{ color:#7B61FF; }
+.wantbtn--pick:hover{ box-shadow:0 5px 18px rgba(123,97,255,.36); }
+.wantbtn--pick.is-on{
+  background:linear-gradient(135deg,#9B84FF 0%,#7B61FF 100%);
+  box-shadow:0 4px 16px rgba(123,97,255,.45);
+}
+.wantbtn.is-on svg{ animation:pop .28s cubic-bezier(.34,1.56,.64,1); }
+@keyframes pop{ 0%{ transform:scale(.6) } 60%{ transform:scale(1.18) } 100%{ transform:scale(1) } }
+
 /* поднять в «Больше всего хочу» — там же, где ✕ на карточках идей */
 .present__pin{
-  position:absolute; top:8px; right:8px; z-index:3;
+  position:absolute; top:8px; left:8px; z-index:3;
   width:30px; height:30px; border-radius:50%; background:#fff;
   box-shadow:0 1px 6px rgba(0,0,0,.16); display:flex; align-items:center; justify-content:center;
   opacity:0; transition:opacity .15s, background .15s;

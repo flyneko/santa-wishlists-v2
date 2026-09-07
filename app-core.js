@@ -295,6 +295,7 @@
       if (!it.oldPrice) return 0;
       return Math.round((1 - it.price / it.oldPrice) * 100);
     },
+    dismissTitle: function () { return store.ideasFor === 'self' ? 'Не моё' : 'Не подходит'; },
     isMine: function (it) { return it.reserved === 'you'; },
     takenLabel: function (it) {
       if (it.reserved === 'bought') return 'Куплено';
@@ -600,7 +601,12 @@
       toast('В подборке для ' + recipient.value.short);
     },
     removeFromShortlist: function (it) {
-      store.shortlists[store.recipientId] = shortlist.value.filter(function (x) { return x.id !== it.id; });
+      /* в подборке лежит копия со своим id — с карточки идеи совпадёт только pid */
+      store.shortlists[store.recipientId] = shortlist.value.filter(function (x) {
+        if (x.id === it.id) return false;
+        if (x.pid === it.pid) return false;
+        return true;
+      });
       toast('Убрано из подборки');
     },
     /* скрытые «не моё» идеи не показываем ни в каруселях, ни в фильтре */
@@ -620,6 +626,42 @@
   var POOL = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" d="M9 11.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Zm0-4.7a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2Z"/><path fill="currentColor" d="M16.4 11.4a2.7 2.7 0 1 0 0-5.4 2.7 2.7 0 0 0 0 5.4Zm0-4a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Z"/><path fill="currentColor" d="M9 12.6c-3 0-5.5 1.6-5.5 3.6V19h11v-2.8c0-2-2.5-3.6-5.5-3.6Zm4 4.9H5v-1.3c0-1 1.8-2.1 4-2.1s4 1.1 4 2.1Z"/><path fill="currentColor" d="M16.4 12.8c-.6 0-1.2.1-1.7.2.8.8 1.3 1.9 1.3 3.2V19h4.5v-2.5c0-1.9-1.9-3.7-4.1-3.7Z"/></svg>';
 
   function register(app) {
+
+    /* ── действие на карточке идеи: одна кнопка в углу снимка ──
+       себе — сердце «Хочу», другому — плюс «В подборку». Форма одна, меняется значок. */
+    app.component('WantButton', {
+      props: ['item'],
+      setup: function () { return { store: store, A: A }; },
+      computed: {
+        self: function () { return store.ideasFor === 'self'; },
+        on: function () { return this.self ? !!this.item.saved : A.inShortlist(this.item); },
+        label: function () {
+          if (this.self) return this.item.saved ? 'Уже в вишлисте' : 'Хочу';
+          return this.on ? 'Уже в подборке' : 'В подборку';
+        }
+      },
+      methods: {
+        act: function () {
+          if (this.self) { A.addIdeaToList(this.item); return; }
+          if (this.on) { A.removeFromShortlist(this.item); return; }
+          A.addToShortlist(this.item);
+        }
+      },
+      template: [
+        '<button class="wantbtn" :class="{\'is-on\':on,\'wantbtn--pick\':!self}" @click="act()" :title="label" :aria-label="label">',
+        '  <svg v-if="self" viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">',
+        '    <path :fill="on ? \'currentColor\' : \'none\'" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"',
+        '          d="M12 20.3s-7.6-4.7-7.6-9.8a4.4 4.4 0 0 1 8-2.5 4.4 4.4 0 0 1 8 2.5c0 5.1-7.6 9.8-7.6 9.8Z"/>',
+        '  </svg>',
+        '  <svg v-else-if="on" viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">',
+        '    <path fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" d="m5.5 12.4 4.2 4.2 8.8-9.2"/>',
+        '  </svg>',
+        '  <svg v-else viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">',
+        '    <path fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" d="M12 5.6v12.8M5.6 12h12.8"/>',
+        '  </svg>',
+        '</button>'
+      ].join('')
+    });
 
     /* ── карусель на Swiper: обёртка вокруг слотовых .swiper-slide ── */
     app.component('SwipeRow', {
@@ -712,6 +754,8 @@
         '      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M17 9V7A5 5 0 0 0 7 7v2H5.8A1.8 1.8 0 0 0 4 10.8v8.4c0 1 .8 1.8 1.8 1.8h12.4c1 0 1.8-.8 1.8-1.8v-8.4c0-1-.8-1.8-1.8-1.8Zm-8-2a3 3 0 0 1 6 0v2H9Z"/></svg>',
         '      {{ A.takenLabel(item) }}',
         '    </div>',
+        /* угол снимка — для действий, которые должны лежать на фото */
+        '    <slot name="media" />',
         '  </div>',
         '  <div class="present__info">',
         '    <div class="present__name">{{ item.name }}</div>',
@@ -822,8 +866,17 @@
         '    <div class="tier__label"><tier-icon :tier="g.key" /> {{ g.label }} <span class="tier__count">{{ g.items.length }}</span></div>',
         '    <div v-if="g.items.length" class="grid grid--4">',
         '      <gift-card v-for="it in g.items" :key="it.id" :item="it">',
-        '        <button v-if="g.key!==\'top\'" class="present__pin" @click="A.bump(it,\'top\')" title="В «Больше всего хочу»"><tier-icon tier="top" /></button>',
-        '        <button class="present__add present__add--ghost" @click="A.editItem(it)">Изменить</button>',
+        /* действие в углу снимка — как на карточках идей */
+        '        <template #media>'
+        + '<button class="wantbtn wantbtn--edit" @click="A.editItem(it)" title="Изменить" aria-label="Изменить">'
+        + '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
+        + '<path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"'
+        + ' d="M16.5 4.4a2 2 0 0 1 2.8 2.8L8.8 17.7l-3.7.9.9-3.7Z"/>'
+        + '<path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" d="m14.8 6.1 3.1 3.1"/>'
+        + '</svg></button>'
+        + '<button v-if="g.key!==\'top\'" class="present__pin" @click="A.bump(it,\'top\')" title="В «Больше всего хочу»">'
+        + '<tier-icon tier="top" /></button>'
+        + '</template>',
         '      </gift-card>',
         '    </div>',
         '    <div v-else class="emptytier">Пусто — добавьте подарок в этот приоритет</div>',
@@ -919,14 +972,11 @@
         '      <swipe-row :count="A.live(col.items).length">',
         '        <div v-for="it in A.live(col.items)" :key="it.id" class="swiper-slide carousel__card">',
         '          <gift-card :item="it">',
-        '            <template v-if="isSelf">',
-        '              <button class="present__dismiss" @click="A.dismissIdea(it)" title="Не моё">✕</button>',
-        '              <button class="present__add present__add--sm" :class="{\'is-added\':it.saved}" @click="A.addIdeaToList(it)">{{ it.saved ? "В вишлисте" : "Хочу" }}</button>',
-        '            </template>',
-        '            <template v-else>',
-        '              <button class="present__dismiss" @click="A.dismissIdea(it)" title="Не подходит">✕</button>',
-        '              <button class="present__add present__add--ghost present__add--sm" :class="{\'is-added\':A.inShortlist(it)}" @click="A.addToShortlist(it)">{{ A.inShortlist(it) ? "✓ В подборке" : "В подборку" }}</button>',
-        '            </template>',
+        /* именованный слот — прямой потомок компонента, условие вешаем на саму кнопку */
+        '            <template #media>'
+        + '<want-button :item="it" />'
+        + '<button class="present__dismiss" @click="A.dismissIdea(it)" :title="A.dismissTitle()">✕</button>'
+        + '</template>',
         '          </gift-card>',
         '        </div>',
         '        <div class="swiper-slide carousel__card">',
@@ -944,14 +994,10 @@
         '    </div>',
         '    <div class="grid grid--4">',
         '      <gift-card v-for="it in A.live(store.activeFilter.items)" :key="it.id" :item="it">',
-        '        <template v-if="isSelf">',
-        '          <button class="present__dismiss" @click="A.dismissIdea(it)" title="Не моё">✕</button>',
-        '          <button class="present__add" :class="{\'is-added\':it.saved}" @click="A.addIdeaToList(it)">{{ it.saved ? "В вишлисте" : "Хочу" }}</button>',
-        '        </template>',
-        '        <template v-else>',
-        '          <button class="present__dismiss" @click="A.dismissIdea(it)" title="Не подходит">✕</button>',
-        '          <button class="present__add present__add--ghost" :class="{\'is-added\':A.inShortlist(it)}" @click="A.addToShortlist(it)">{{ A.inShortlist(it) ? "✓ В подборке" : "В подборку" }}</button>',
-        '        </template>',
+        '        <template #media>'
+        + '<want-button :item="it" />'
+        + '<button class="present__dismiss" @click="A.dismissIdea(it)" :title="A.dismissTitle()">✕</button>'
+        + '</template>',
         '      </gift-card>',
         '    </div>',
         '  </template>',
@@ -976,7 +1022,7 @@
         '  </div>',
 
         '  <div v-if="!shortlist.length" class="emptytier" style="margin-top:20px">',
-        '    Пока пусто. Добавляйте идеи кнопкой «В подборку» на карточке.',
+        '    Пока пусто. Добавляйте идеи кнопкой ＋ в углу карточки.',
         '  </div>',
         '  <div v-else class="grid grid--4" style="margin-top:20px">',
         '    <gift-card v-for="it in shortlist" :key="it.id" :item="it">',
@@ -1178,7 +1224,7 @@
         '    </div>',
         '  </div>',
         '  <div v-if="!shortlist.length" class="wl-rail__empty">',
-        '    Пока пусто.<br>Добавляйте идеи кнопкой «В подборку».',
+        '    Пока пусто.<br>Добавляйте идеи кнопкой ＋ на карточке.',
         '  </div>',
         '  <div v-else class="wl-rail__list">',
         '    <div v-for="(it,i) in shortlist" :key="it.id" class="wl-rail__row"',
