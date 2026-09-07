@@ -140,27 +140,29 @@ a:hover{text-decoration:underline}
 }
 
 /* ───────────────────────── grids ───────────────────────── */
-.grid{display:grid;gap:22px 18px}
+.grid{display:grid;gap:26px 16px}
 .grid--2{grid-template-columns:repeat(2,1fr)}
 .grid--3{grid-template-columns:repeat(3,1fr)}
-.grid--4{grid-template-columns:repeat(4,1fr)}
+/* авто-колонки: на «Моих списках» (вся ширина) карточек влезает больше,
+   на «Идеях» (есть правая панель) — меньше, при одном и том же классе */
+.grid--4{grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
 
 /* ───────────────────────── карточка товара (как .present на сайте) ───────────────────────── */
 .present{ position:relative; display:flex; flex-direction:column; }
 .present__thumb{ border-radius:10px; background:#f3f4f5; }
-.present__info{ padding-top:11px; display:flex; flex-direction:column; gap:7px; flex:1; }
+.present__info{ padding-top:10px; display:flex; flex-direction:column; gap:6px; flex:1; }
 .present__name{
-  font-size:14px; line-height:20px; font-weight:500; color:var(--ink);
+  font-size:13px; line-height:18px; font-weight:500; color:var(--ink);
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-  min-height:40px; transition:color .15s;
+  min-height:36px; transition:color .15s;
 }
 .present:hover .present__name{ color:var(--red); }
-.present__price{ font-weight:700; font-size:18px; }
+.present__price{ font-weight:700; font-size:16px; }
 .present__foot{ margin-top:auto; padding-top:12px; display:flex; flex-direction:column; gap:8px; }
 .present__media{ position:relative; }
 .present__add{
-  width:100%; height:44px; border-radius:10px;
-  background:var(--green); color:#fff; font-weight:700; font-size:16px;
+  width:100%; height:40px; border-radius:10px;
+  background:var(--green); color:#fff; font-weight:700; font-size:14px;
   display:flex; align-items:center; justify-content:center; transition:background .15s,opacity .15s;
 }
 .present__add:hover{ background:#23a259; }
@@ -187,16 +189,18 @@ a:hover{text-decoration:underline}
 .present__add--flat{ background:transparent; color:var(--muted); font-weight:600; height:32px; }
 .present__add--flat:hover{ background:var(--field); color:var(--ink); }
 
-/* «уже дарят» — состояние карточки: приглушённое фото и полоса по низу снимка */
-.present.is-taken .present__thumb{ filter:grayscale(.55); opacity:.72; }
-.present__taken{
-  position:absolute; left:0; right:0; bottom:0; z-index:2;
-  display:flex; align-items:center; justify-content:center; gap:6px;
-  height:30px; border-radius:0 0 10px 10px;
-  background:rgba(28,28,30,.8); color:#fff;
-  font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+/* «уже дарят» — состояние карточки. Плашка стоит в теле карточки, а не поверх
+   фото: на своём фоне она читается одинаково при любой картинке товара. */
+.present.is-taken .present__thumb{ filter:grayscale(.5); opacity:.62; }
+.present.is-taken .present__name,
+.present.is-taken .present__price{ color:var(--muted-2); }
+.present.is-taken .present__price{ text-decoration:line-through; text-decoration-thickness:1.5px; }
+/* статус в ряду кнопок: та же форма, но явно неактивный */
+.present__add--taken{
+  background:var(--field); color:var(--muted); cursor:default;
+  gap:7px; font-size:13px; letter-spacing:.02em;
 }
-.present__taken.is-mine{ background:rgba(39,174,96,.92); }
+.present__add--taken.is-mine{ background:rgba(39,174,96,.13); color:var(--green); }
 
 .card__name{
   font-size:14px;line-height:1.3;font-weight:500;
@@ -226,34 +230,6 @@ a:hover{text-decoration:underline}
   font-size:14px; font-weight:600; letter-spacing:normal; line-height:1.4;
 }
 .geo{ color:var(--red); font-weight:600; font-size:14px; white-space:nowrap; }
-
-/* ───────────────────────── переключатель списков ───────────────────────── */
-.listbar{ display:flex; align-items:center; gap:14px; min-width:0; }
-.listbar__label{ font-size:13px; font-weight:700; color:var(--muted); flex:none; }
-.listbar__scroll{ display:flex; align-items:center; gap:8px; overflow-x:auto; padding:3px; min-width:0; }
-.listbar__scroll::-webkit-scrollbar{ height:0; }
-.listtab{
-  display:inline-flex; align-items:center; gap:8px; flex:none;
-  height:42px; padding:0 16px; border-radius:999px;
-  border:1.5px solid var(--line); background:#fff;
-  font-size:14px; font-weight:600; color:var(--ink); transition:background .15s,border-color .15s,color .15s;
-}
-.listtab:hover{ background:var(--field); }
-.listtab.is-on{ background:var(--green); border-color:var(--green); color:#fff; }
-.listtab__emoji{ font-size:16px; }
-.listtab__n{
-  min-width:20px; height:20px; padding:0 5px; border-radius:999px;
-  background:rgba(0,0,0,.08); font-size:12px; font-weight:700;
-  display:inline-flex; align-items:center; justify-content:center;
-}
-.listtab.is-on .listtab__n{ background:rgba(255,255,255,.28); }
-.listtab--add{ width:42px; padding:0; justify-content:center; font-size:18px; color:var(--muted); }
-.listbar__share{
-  flex:none; margin-left:4px; height:42px; padding:0 16px; border-radius:999px;
-  border:1px solid var(--line); background:#fff; font-size:14px; font-weight:600; color:var(--ink);
-}
-.listbar__share:hover{ background:var(--field); }
-@media (max-width:600px){ .listbar{ gap:8px } .listbar__label{ display:none } }
 
 /* ───────────────────────── добавить подарок (карточка) ───────────────────────── */
 .addcard{ margin-bottom:30px; }
@@ -490,7 +466,6 @@ a:hover{text-decoration:underline}
 }
 
 /* ───────────────────────── shared list / reserve rows ───────────────────────── */
-.sharehead{display:flex;gap:13px;align-items:center;margin-bottom:24px}
 .rlist{display:flex;flex-direction:column;gap:12px}
 .rrow{
   display:flex;gap:15px;
@@ -639,3 +614,25 @@ a:hover{text-decoration:underline}
 .coverdrop input{ display:none; }
 .coverdrop__ic{ font-size:22px; }
 .coverdrop em{ display:block; font-style:normal; font-size:12px; font-weight:500; color:var(--muted); margin-top:2px; }
+
+.sharenote{
+  display:flex; align-items:center; gap:8px;
+  font-size:13px; font-weight:600; color:var(--muted);
+  background:var(--field); border-radius:10px; padding:11px 14px; margin:-8px 0 26px;
+}
+
+/* ───────────────────── модалка «Новый список» ───────────────────── */
+.listava{
+  width:48px; height:48px; flex:none; border-radius:12px;
+  background-size:cover; background-position:center;
+  display:flex; align-items:center; justify-content:center; font-size:24px;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
+}
+.emochip{
+  width:44px; height:44px; border-radius:11px; font-size:21px;
+  border:1.5px solid var(--line); background:#fff;
+  display:flex; align-items:center; justify-content:center;
+  transition:border-color .15s, background .15s;
+}
+.emochip:hover{ background:var(--field); }
+.emochip.is-on{ border-color:var(--green); background:rgba(39,174,96,.1); }

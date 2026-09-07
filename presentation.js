@@ -52,9 +52,9 @@
       /* экран берём из текущего маршрута — тогда переходы внутри экранов
          (подборка, сбор) работают и в презентации */
       var screenComp = computed(function () { return WL.screenByRoute[WL.store.route]; });
-      var showListbar = computed(function () { return WL.store.route === 'lists'; });
+      var showRail = computed(function () { return WL.store.route === 'lists' || WL.store.route === 'ideas'; });
       return { deck: deck, store: WL.store, story: story, screenComp: screenComp,
-               showListbar: showListbar, stories: STORIES, goStory: goStory };
+               showRail: showRail, stories: STORIES, goStory: goStory };
     },
     template: [
       '<div class="deck">',
@@ -79,10 +79,12 @@
       '      <p class="eyebrow">{{ story.eyebrow }}</p>',
       '      <h1 class="story-title">{{ story.title }}</h1>',
       '      <p class="story-sub">{{ story.sub }}</p>',
-      '      <div v-if="showListbar" class="deck__listbar"><list-tabs /></div>',
-      '      <transition name="fade" mode="out-in">',
-      '        <div class="screen" :key="store.route + store.listView"><component :is="screenComp" /></div>',
-      '      </transition>',
+      '      <div class="deck__stagebody" :class="{\'deck__stagebody--rail\':showRail}">',
+      '        <transition name="fade" mode="out-in">',
+      '          <div class="screen" :key="store.route + store.listView + store.ideasFor"><component :is="screenComp" /></div>',
+      '        </transition>',
+      '        <wishlist-rail v-if="showRail" />',
+      '      </div>',
       '    </main>',
       '  </div>',
       '  <overlay-host />',

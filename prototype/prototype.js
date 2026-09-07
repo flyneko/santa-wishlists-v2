@@ -15,8 +15,8 @@
       /* вкладки только на двух главных экранах, остальное — подстраницы */
       var isMain = computed(function () { return store.route === 'ideas' || store.route === 'lists'; });
       var screenComp = computed(function () { return WL.screenByRoute[store.route]; });
-      var showRail = computed(function () { return store.route === 'ideas'; });
-      var showListbar = computed(function () { return store.route === 'lists'; });
+      /* панель справа — и на идеях, и на списках (там в ней сами списки) */
+      var showRail = computed(function () { return isMain.value; });
       var backTo = computed(function () {
         if (store.route === 'shared') return { route: 'lists', label: '← Мой вишлист', note: 'так список видит даритель' };
         if (store.route === 'shortlist') return { route: 'ideas', label: '← Идеи подарков' };
@@ -28,7 +28,7 @@
 
       return {
         store: store, A: A, IC: IC, isMain: isMain, screenComp: screenComp,
-        showRail: showRail, showListbar: showListbar, backTo: backTo,
+        showRail: showRail, backTo: backTo,
         currentList: WL.currentList, msNav: msNav
       };
     },
@@ -64,12 +64,10 @@
       '      <a class="ms-deck" href="../">← К презентации</a>',
       '    </header>',
 
-      '    <div v-if="showListbar" class="ms-listbar"><list-tabs /></div>',
-
       '    <div class="ms-body" :class="{\'ms-body--rail\':showRail}">',
       '      <div>',
       '        <transition name="fade" mode="out-in">',
-      '          <div :key="store.route + store.ideasFor"><component :is="screenComp" /></div>',
+      '          <div :key="store.route + store.ideasFor + store.listView"><component :is="screenComp" /></div>',
       '        </transition>',
       '      </div>',
       '      <wishlist-rail v-if="showRail" />',

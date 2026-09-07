@@ -21,6 +21,7 @@
     { key: 'музыка', emoji: '🎵' }, { key: 'путешествия', emoji: '✈️' },
     { key: 'творчество', emoji: '🎨' }, { key: 'питомцы', emoji: '🐾' }
   ];
+  var LIST_EMOJI = ['🎁', '🎂', '🎄', '💼', '💍', '🏠', '🎓', '👶', '✈️', '🎃', '❤️', '🍀'];
   var AVA_COLORS = ['#7B61FF', '#2D9CDB', '#EB5757', '#F2994A', '#00A99D', '#BB6BD9', '#E4A11B'];
   /* берём первый свободный цвет — иначе новый человек дублирует аватар Ани */
   function freeColor(taken) {
@@ -90,6 +91,7 @@
       shortlists: { r1: [], r2: [], r3: [] },
 
       coverUrl: '',
+      newList: { title: '', emoji: '🎁', date: '', grad: '' },
       addUrl: 'https://mrgeek.ru/product/solonka-i-perechnica-edinorogi/',
       addFound: false,
       addTier: 'top',
@@ -104,26 +106,43 @@
       me: { name: 'Evgeniy Unknown' },
       currentListId: 'l1',
       listView: 'items',          // items | activity — тело страницы «Мои списки»
+      drag: null,                 // { kind:'wish'|'pick', from, over } — перетаскивание в панели
 
       lists: [
         seedList('l1', 'День рождения', '🎂', '14 марта', good(3).img, [
           gift(3, 'top', 'розовый'),
           gift(1, 'top', ''),
           gift(2, 'top', ''),
-          gift(0, 'want', ''),
-          gift(8, 'want', ''),
+          gift(8, 'top', ''),
+          gift(0, 'top', ''),
           gift(11, 'want', ''),
-          gift(13, 'someday', '')
+          gift(6, 'want', ''),
+          gift(9, 'want', ''),
+          gift(12, 'want', ''),
+          gift(13, 'someday', ''),
+          gift(5, 'someday', '')
         ], COVERS[1].grad),
         seedList('l2', 'Новый год', '🎄', '31 декабря', good(7).img, [
           gift(5, 'top', ''),
-          gift(16, 'want', ''),
-          gift(14, 'want', '')
+          gift(2, 'top', ''),
+          gift(14, 'top', ''),
+          gift(16, 'top', ''),
+          gift(7, 'top', ''),
+          gift(13, 'want', ''),
+          gift(8, 'want', ''),
+          gift(6, 'want', ''),
+          gift(1, 'someday', '')
         ], COVERS[2].grad),
         seedList('l3', 'Коллегам', '💼', '', good(4).img, [
           gift(4, 'top', ''),
-          gift(10, 'want', ''),
-          gift(15, 'want', '')
+          gift(10, 'top', ''),
+          gift(12, 'top', ''),
+          gift(15, 'top', ''),
+          gift(9, 'top', ''),
+          gift(0, 'want', ''),
+          gift(6, 'want', ''),
+          gift(13, 'want', ''),
+          gift(7, 'someday', '')
         ], COVERS[3].grad)
       ],
 
@@ -174,6 +193,8 @@
       }
     };
     s.lists[0].items[2].reserved = 'someone';
+    s.lists[1].items[3].reserved = 'someone';
+    s.lists[2].items[1].reserved = 'someone';
     return s;
   }
 
@@ -233,14 +254,14 @@
 
     openSheet: function (name) { store.sheet = name; store.openMenu = null; },
     isWideSheet: function () {
-      return ['person', 'filters', 'cover'].indexOf(store.sheet) >= 0;
+      return ['person', 'filters', 'cover', 'list'].indexOf(store.sheet) >= 0;
     },
     closeSheet: function () { store.sheet = null; },
 
     findByUrl: function () { store.addFound = true; },
     confirmAdd: function () {
       var g = window.WL_GOOD(10);
-      currentList.value.items.push({
+      currentList.value.items.unshift({
         id: uid(), pid: g.id, name: g.name, price: g.price, oldPrice: 0,
         img: g.img, tier: store.addTier, note: store.addNote, reserved: null
       });
@@ -265,6 +286,57 @@
       if (it) { it.tier = store.editTier; it.note = store.editNote; }
       store.sheet = null; toast('Сохранено');
     },
+    /* ── перетаскивание строк в правой панели ── */
+    _dragArr: function (kind) {
+      return kind === 'wish' ? currentList.value.items : (store.shortlists[store.recipientId] || []);
+    },
+    dragStart: function (kind, i, e) {
+      store.drag = { kind: kind, from: i, over: i };
+      if (e && e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        /* Firefox не начинает перетаскивание без данных */
+        try { e.dataTransfer.setData('text/plain', String(i)); } catch (err) {}
+      }
+    },
+    dragOver: function (kind, i) {
+      var d = store.drag;
+      if (!d) return;
+      if (d.kind !== kind) return;
+      d.over = i;
+    },
+    dragDrop: function (kind, i) {
+      var d = store.drag;
+      store.drag = null;
+      if (!d) return;
+      if (d.kind !== kind) return;
+      if (d.from === i) return;
+      var arr = A._dragArr(kind);
+      var moved = arr.splice(d.from, 1)[0];
+      arr.splice(i, 0, moved);
+      toast('Порядок обновлён');
+    },
+    dragEnd: function () { store.drag = null; },
+    /* `&&` в атрибуте ломает парсер этой сборки Vue — выносим в функции */
+    isDragging: function (kind, i) {
+      var d = store.drag;
+      if (!d) return false;
+      if (d.kind !== kind) return false;
+      return d.from === i;
+    },
+    isDropTarget: function (kind, i) {
+      var d = store.drag;
+      if (!d) return false;
+      if (d.kind !== kind) return false;
+      if (d.from === i) return false;
+      return d.over === i;
+    },
+
+    removeFromList: function (it) {
+      currentList.value.items = currentList.value.items.filter(function (x) { return x.id !== it.id; });
+      /* снимаем отметку на карточке идеи, чтобы её снова можно было добавить */
+      store.ideasSelf.concat(A._pool()).forEach(function (i) { if (i.pid === it.pid) i.saved = false; });
+      toast('Убрано из «' + currentList.value.title + '»');
+    },
     removeItem: function () {
       currentList.value.items = currentList.value.items.filter(function (i) { return i.id !== store.editId; });
       store.sheet = null; toast('Удалено из списка');
@@ -279,11 +351,27 @@
       store.currentListId = id; store.sheet = null; store.openMenu = null;
       toast('Список: ' + currentList.value.title);
     },
+    listEmoji: LIST_EMOJI,
     newList: function () {
-      var id = 'l' + (store.lists.length + 1);
-      store.lists.push(seedList(id, 'Новый список', '🎁', '', good(6).img, [],
-        COVERS[store.lists.length % COVERS.length].grad));
-      store.currentListId = id; store.sheet = null; store.openMenu = null; toast('Список создан');
+      store.newList = { title: '', emoji: '🎁', date: '',
+                        grad: COVERS[store.lists.length % COVERS.length].grad };
+      store.openMenu = null;
+      store.sheet = 'list';
+    },
+    setNewListEmoji: function (e) { store.newList.emoji = e; },
+    setNewListGrad: function (g) { store.newList.grad = g; },
+    canCreateList: function () { return (store.newList.title || '').trim().length > 0; },
+    createList: function () {
+      var n = store.newList;
+      var title = (n.title || '').trim();
+      if (!title) { toast('Назовите список'); return; }
+      var id = uid();
+      store.lists.push(seedList(id, title, n.emoji, n.date.trim(), good(6).img, [], n.grad));
+      store.currentListId = id;
+      store.listView = 'items';
+      store.sheet = null;
+      A.go('lists');
+      toast('Список «' + title + '» создан');
     },
     copyLink: function () { toast('Ссылка скопирована'); },
 
@@ -393,7 +481,7 @@
     addIdeaToList: function (it) {
       if (it.saved) return;
       it.saved = true;
-      currentList.value.items.push({
+      currentList.value.items.unshift({
         id: uid(), pid: it.pid, name: it.name, price: it.price, oldPrice: it.oldPrice,
         img: it.img, tier: 'want', note: '', reserved: null
       });
@@ -468,7 +556,7 @@
     addToShortlist: function (it) {
       var list = store.shortlists[store.recipientId];
       if (list.some(function (x) { return x.pid === it.pid; })) return;
-      list.push({
+      list.unshift({
         id: uid(), pid: it.pid, name: it.name, price: it.price,
         oldPrice: it.oldPrice, img: it.img, reserved: null
       });
@@ -528,16 +616,19 @@
         '<article class="present" :class="{\'is-taken\':item.reserved}">',
         '  <div class="present__media">',
         '    <thumb :image="item.img" cls="present__thumb" />',
-        '    <div v-if="item.reserved" class="present__taken" :class="{\'is-mine\':A.isMine(item)}">',
-        '      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M17 9V7A5 5 0 0 0 7 7v2H5.8A1.8 1.8 0 0 0 4 10.8v8.4c0 1 .8 1.8 1.8 1.8h12.4c1 0 1.8-.8 1.8-1.8v-8.4c0-1-.8-1.8-1.8-1.8Zm-8-2a3 3 0 0 1 6 0v2H9Z"/></svg>',
-        '      {{ A.takenLabel(item) }}',
-        '    </div>',
         '  </div>',
         '  <div class="present__info">',
         '    <div class="present__name">{{ item.name }}</div>',
         '    <div class="present__price">{{ A.money(item.price) }}<s v-if="item.oldPrice"> {{ A.money(item.oldPrice) }}</s></div>',
         '    <span v-if="item.reason" class="reason" :class="{\'reason--gold\':item.kind===\'gold\'}">{{ item.reason }}</span>',
-        '    <div class="present__foot"><slot /></div>',
+        '    <div class="present__foot">',
+        /* статус — кнопкой в общем ряду действий, а не плашкой поверх фото */
+        '      <div v-if="item.reserved" class="present__add present__add--taken" :class="{\'is-mine\':A.isMine(item)}">',
+        '        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M17 9V7A5 5 0 0 0 7 7v2H5.8A1.8 1.8 0 0 0 4 10.8v8.4c0 1 .8 1.8 1.8 1.8h12.4c1 0 1.8-.8 1.8-1.8v-8.4c0-1-.8-1.8-1.8-1.8Zm-8-2a3 3 0 0 1 6 0v2H9Z"/></svg>',
+        '        {{ A.takenLabel(item) }}',
+        '      </div>',
+        '      <slot />',
+        '    </div>',
         '  </div>',
         '</article>'
       ].join('')
@@ -729,7 +820,10 @@
         '            <button class="present__dismiss" @click="A.dismissIdea(it)" title="Не моё">✕</button>',
         '            <button class="present__add present__add--sm" :class="{\'is-added\':it.saved}" @click="A.addIdeaToList(it)">{{ it.saved ? "В вишлисте" : "Хочу" }}</button>',
         '          </template>',
-        '          <button v-else class="present__add present__add--ghost present__add--sm" :class="{\'is-added\':A.inShortlist(it)}" @click="A.addToShortlist(it)">{{ A.inShortlist(it) ? "✓ В подборке" : "В подборку" }}</button>',
+        '          <template v-else>',
+        '            <button class="present__dismiss" @click="A.dismissIdea(it)" title="Не подходит">✕</button>',
+        '            <button class="present__add present__add--ghost present__add--sm" :class="{\'is-added\':A.inShortlist(it)}" @click="A.addToShortlist(it)">{{ A.inShortlist(it) ? "✓ В подборке" : "В подборку" }}</button>',
+        '          </template>',
         '        </gift-card>',
         '        <button class="carousel__more" @click="A.openCollection(col)"><span class="carousel__more-ic">→</span><span>Посмотреть<br>больше</span></button>',
         '      </div>',
@@ -749,6 +843,7 @@
         '          <button class="present__add" :class="{\'is-added\':it.saved}" @click="A.addIdeaToList(it)">{{ it.saved ? "В вишлисте" : "Хочу" }}</button>',
         '        </template>',
         '        <template v-else>',
+        '          <button class="present__dismiss" @click="A.dismissIdea(it)" title="Не подходит">✕</button>',
         '          <button class="present__add present__add--ghost" :class="{\'is-added\':A.inShortlist(it)}" @click="A.addToShortlist(it)">{{ A.inShortlist(it) ? "✓ В подборке" : "В подборку" }}</button>',
         '        </template>',
         '      </gift-card>',
@@ -789,7 +884,6 @@
         '          <button class="present__add present__add--ghost" @click="A.reserve(it,\'bought\')">Я купил это</button>',
         '          <button class="present__add present__add--sm present__add--flat" @click="A.reserve(it,null)">Снять резерв</button>',
         '        </template>',
-        '        <template v-else><button class="present__add is-added" disabled>✓ Куплено</button></template>',
         '      </div>',
         '    </gift-card>',
         '  </div>',
@@ -851,39 +945,48 @@
         var groups = computed(function () {
           return groupByTier(list).filter(function (g) { return g.items.length; });
         });
-        return { store: store, A: A, list: list, groups: groups };
+        var taken = computed(function () {
+          return list.items.filter(function (i) { return i.reserved; }).length;
+        });
+        return { store: store, A: A, list: list, groups: groups, taken: taken };
       },
+      /* та же шапка и та же сетка карточек, что у владельца — меняются действия */
       template: [
         '<div>',
-        '  <div class="sharehead">',
-        '    <thumb :image="list.cover" cls="" style="width:44px;height:44px;border-radius:50%;flex:none" />',
-        '    <div>',
-        '      <div class="cover__title">Вишлист Ани — «{{ list.title }}»</div>',
-        '      <div class="cover__meta">{{ list.items.length }} подарков · 📅 через 9 дней</div>',
+        '  <header class="hero" :style="A.heroStyle(list)">',
+        '    <div class="hero__scrim"></div>',
+        '    <div class="hero__body">',
+        '      <span class="hero__emoji">{{ list.emoji }}</span>',
+        '      <h1 class="hero__title">Вишлист Ани — «{{ list.title }}»</h1>',
+        '      <div class="hero__meta">',
+        '        <span v-if="list.date">📅 {{ list.date }}</span>',
+        '        <span>🎁 {{ list.items.length }} подарков</span>',
+        '        <span>🔒 {{ taken }} уже разобрано</span>',
+        '      </div>',
+        '      <div class="hero__acts">',
+        '        <button class="hact hact--primary" @click="A.copyLink()">🔗 Скопировать ссылку</button>',
+        '      </div>',
         '    </div>',
-        '  </div>',
+        '  </header>',
+
+        '  <p class="sharenote">🔒 Аня не увидит, кто и что зарезервировал — только счётчики.</p>',
+
         '  <div v-for="g in groups" :key="g.key" class="tier">',
-        '    <div class="tier__label"><tier-icon :tier="g.key" /> {{ g.label }}</div>',
-        '    <div class="rlist">',
-        '      <gift-row v-for="it in g.items" :key="it.id" :item="it">',
-        '        <div class="rrow__actions">',
-        '          <template v-if="!it.reserved">',
-        '            <button class="btn btn--red btn--sm" @click="A.reserve(it,\'you\')">Зарезервировать</button>',
-        '            <button class="btn btn--outline btn--sm" @click="A.startPool(it)">Скинуться вместе</button>',
-        '          </template>',
-        '          <template v-else-if="it.reserved===\'you\'">',
-        '            <span class="tag tag--mine">✓ Вы зарезервировали</span>',
-        '            <button class="btn btn--outline btn--sm" @click="A.reserve(it,\'bought\')">Я купил это</button>',
-        '            <button class="btn btn--white btn--sm" @click="A.reserve(it,null)">Отменить</button>',
-        '          </template>',
-        '          <template v-else-if="it.reserved===\'bought\'"><span class="tag tag--done">✓ Куплено</span></template>',
-        '          <template v-else>',
-        '            <span class="tag tag--hold">✓ Занято кем-то</span>',
-        '            <button class="btn btn--outline btn--sm" @click="A.startPool(it)">Скинуться вместе</button>',
-        '          </template>',
-        '        </div>',
-        '        <div v-if="!it.reserved" class="locknote">🔒 Аня не увидит, кто зарезервировал</div>',
-        '      </gift-row>',
+        '    <div class="tier__label"><tier-icon :tier="g.key" /> {{ g.label }} <span class="tier__count">{{ g.items.length }}</span></div>',
+        '    <div class="grid grid--4">',
+        '      <gift-card v-for="it in g.items" :key="it.id" :item="it">',
+        '        <template v-if="!it.reserved">',
+        '          <button class="present__add" @click="A.reserve(it,\'you\')">Зарезервировать</button>',
+        '          <button class="present__add present__add--ghost present__add--sm" @click="A.startPool(it)">Скинуться вместе</button>',
+        '        </template>',
+        '        <template v-else-if="it.reserved===\'you\'">',
+        '          <button class="present__add present__add--ghost" @click="A.reserve(it,\'bought\')">Я купил это</button>',
+        '          <button class="present__add present__add--sm present__add--flat" @click="A.reserve(it,null)">Снять резерв</button>',
+        '        </template>',
+        '        <template v-else>',
+        '          <button class="present__add present__add--ghost present__add--sm" @click="A.startPool(it)">Скинуться вместе</button>',
+        '        </template>',
+        '      </gift-card>',
         '    </div>',
         '  </div>',
         '</div>'
@@ -928,8 +1031,30 @@
         return { store: store, A: A, currentList: currentList, recipient: recipient, shortlist: shortlist };
       },
       template: [
-        /* ── режим «для другого»: подборка для выбранного человека ── */
-        '<aside v-if="store.ideasFor===\'other\'" class="wl-rail wl-rail--pick">',
+        /* ── страница «Мои списки»: все списки вместо вкладок сверху ── */
+        '<aside v-if="store.route===\'lists\'" class="wl-rail wl-rail--lists">',
+        '  <div class="wl-rail__head">',
+        '    <div class="wl-rail__switch is-static">',
+        '      <span class="wl-rail__emoji">📋</span>',
+        '      <span class="wl-rail__title">Мои списки</span>',
+        '      <b>{{ store.lists.length }}</b>',
+        '    </div>',
+        '  </div>',
+        '  <div class="wl-rail__list">',
+        '    <button v-for="l in store.lists" :key="l.id" class="wl-rail__row wl-rail__row--list" :class="{\'is-on\':l.id===store.currentListId}" @click="A.setList(l.id)">',
+        '      <span class="wl-rail__cover" :style="A.heroStyle(l)">{{ l.emoji }}</span>',
+        '      <div class="wl-rail__meta">',
+        '        <div class="wl-rail__name">{{ l.title }}</div>',
+        '        <div class="wl-rail__price">{{ l.items.length }} подарков<span v-if="l.date"> · {{ l.date }}</span></div>',
+        '      </div>',
+        '      <span v-if="l.id===store.currentListId" class="wl-rail__dot">✓</span>',
+        '    </button>',
+        '  </div>',
+        '  <button class="wl-rail__open" @click="A.newList()">＋ Новый список</button>',
+        '</aside>',
+
+        /* ── идеи для другого: подборка для выбранного человека ── */
+        '<aside v-else-if="store.ideasFor===\'other\'" class="wl-rail wl-rail--pick">',
         '  <div class="wl-rail__head">',
         '    <div class="wl-rail__switch is-static">',
         '      <span class="who__ava" :style="{background:recipient.color}">{{ recipient.name.charAt(0) }}</span>',
@@ -941,19 +1066,23 @@
         '    Пока пусто.<br>Добавляйте идеи кнопкой «В подборку».',
         '  </div>',
         '  <div v-else class="wl-rail__list">',
-        '    <div v-for="it in shortlist" :key="it.id" class="wl-rail__row">',
-        '      <thumb :image="it.img" cls="" style="width:44px;height:44px;flex:none;border-radius:8px" />',
+        '    <div v-for="(it,i) in shortlist" :key="it.id" class="wl-rail__row"',
+        '         :class="{\'is-dragging\':A.isDragging(\'pick\',i),\'is-over\':A.isDropTarget(\'pick\',i)}"',
+        '         draggable="true" @dragstart="A.dragStart(\'pick\',i,$event)" @dragover.prevent="A.dragOver(\'pick\',i)"',
+        '         @drop.prevent="A.dragDrop(\'pick\',i)" @dragend="A.dragEnd()">',
+        '      <span class="wl-rail__grip" title="Перетащите, чтобы поменять порядок">⣿</span>',
+        '      <thumb :image="it.img" cls="wl-rail__thumb" />',
         '      <div class="wl-rail__meta">',
         '        <div class="wl-rail__name">{{ it.name }}</div>',
         '        <div class="wl-rail__price">{{ A.money(it.price) }}<span v-if="it.reserved" class="wl-rail__mark">занято вами</span></div>',
         '      </div>',
-        '      <button class="wl-rail__x" @click="A.removeFromShortlist(it)" title="Убрать">✕</button>',
+        '      <button class="wl-rail__x" draggable="false" @click="A.removeFromShortlist(it)" title="Убрать">✕</button>',
         '    </div>',
         '  </div>',
         '  <button v-if="shortlist.length" class="wl-rail__open" @click="A.go(\'shortlist\')">Открыть подборку →</button>',
         '</aside>',
 
-        /* ── режим «себе»: мой вишлист ── */
+        /* ── идеи себе: мой вишлист ── */
         '<aside v-else class="wl-rail">',
         '  <div class="wl-rail__head">',
         '    <div class="dd">',
@@ -976,10 +1105,17 @@
         '    </div>',
         '  </div>',
         '  <div class="wl-rail__list">',
-        '    <div v-for="it in currentList.items" :key="it.id" class="wl-rail__row">',
-        '      <span class="wl-rail__grip">⣿</span>',
-        '      <thumb :image="it.img" cls="" style="width:44px;height:44px;flex:none;border-radius:8px" />',
-        '      <div class="wl-rail__meta"><div class="wl-rail__name">{{ it.name }}</div><div class="wl-rail__price">{{ A.money(it.price) }}</div></div>',
+        '    <div v-for="(it,i) in currentList.items" :key="it.id" class="wl-rail__row"',
+        '         :class="{\'is-dragging\':A.isDragging(\'wish\',i),\'is-over\':A.isDropTarget(\'wish\',i)}"',
+        '         draggable="true" @dragstart="A.dragStart(\'wish\',i,$event)" @dragover.prevent="A.dragOver(\'wish\',i)"',
+        '         @drop.prevent="A.dragDrop(\'wish\',i)" @dragend="A.dragEnd()">',
+        '      <span class="wl-rail__grip" title="Перетащите, чтобы поменять порядок">⣿</span>',
+        '      <thumb :image="it.img" cls="wl-rail__thumb" />',
+        '      <div class="wl-rail__meta">',
+        '        <div class="wl-rail__name">{{ it.name }}</div>',
+        '        <div class="wl-rail__price">{{ A.money(it.price) }}<span v-if="it.reserved" class="wl-rail__mark">уже дарят</span></div>',
+        '      </div>',
+        '      <button class="wl-rail__x" draggable="false" @click="A.removeFromList(it)" title="Убрать из списка">✕</button>',
         '    </div>',
         '  </div>',
         '  <button class="wl-rail__open" @click="A.go(\'lists\')">Открыть список →</button>',
@@ -1014,23 +1150,6 @@
     });
 
     /* ── видимый переключатель списков ── */
-    app.component('ListTabs', {
-      setup: function () { return { store: store, A: A }; },
-      template: [
-        '<div class="listbar">',
-        '  <div class="listbar__label">Мои списки</div>',
-        '  <div class="listbar__scroll">',
-        '    <button v-for="l in store.lists" :key="l.id" class="listtab" :class="{\'is-on\':l.id===store.currentListId}" @click="A.setList(l.id)">',
-        '      <span class="listtab__emoji">{{ l.emoji }}</span>',
-        '      <span class="listtab__name">{{ l.title }}</span>',
-        '      <span class="listtab__n">{{ l.items.length }}</span>',
-        '    </button>',
-        '    <button class="listtab listtab--add" @click="A.newList()" title="Новый список">＋</button>',
-        '  </div>',
-        '</div>'
-      ].join('')
-    });
-
     app.component('SheetShare', {
       setup: function () { return { store: store, A: A }; },
       template: [
@@ -1046,6 +1165,51 @@
     });
 
     /* ── модалка: обложка шапки списка ── */
+    /* ── модалка: новый список ── */
+    app.component('SheetList', {
+      setup: function () { return { store: store, A: A, n: computed(function () { return store.newList; }) }; },
+      template: [
+        '<div>',
+        '  <div class="sheet__title">Новый список <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
+        '  <p class="sheet__hint">Отдельный список под повод — так дарителю понятно, к чему подарок.</p>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Название</div>',
+        '    <div class="personname">',
+        '      <span class="listava" :style="{backgroundImage:n.grad}">{{ n.emoji }}</span>',
+        '      <input class="field" v-model="n.title" placeholder="День рождения, Новоселье, Коллегам…" @keyup.enter="A.createList()">',
+        '    </div>',
+        '  </div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Значок</div>',
+        '    <div class="tagcloud">',
+        '      <button v-for="e in A.listEmoji" :key="e" class="emochip" :class="{\'is-on\':n.emoji===e}" @click="A.setNewListEmoji(e)">{{ e }}</button>',
+        '    </div>',
+        '  </div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Дата <span class="sheet__count">необязательно</span></div>',
+        '    <input class="field" v-model="n.date" placeholder="14 марта">',
+        '  </div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Обложка</div>',
+        '    <div class="covergrid">',
+        '      <button v-for="c in A.covers" :key="c.key" class="coverswatch" :class="{\'is-on\':n.grad===c.grad}" :style="{backgroundImage:c.grad}" @click="A.setNewListGrad(c.grad)">',
+        '        <span v-if="n.grad===c.grad" class="coverswatch__on">✓</span>',
+        '      </button>',
+        '    </div>',
+        '  </div>',
+
+        '  <div class="sheet__foot">',
+        '    <button class="btn btn--ghost" @click="A.closeSheet()">Отмена</button>',
+        '    <button class="btn btn--green" :class="{\'is-off\':!A.canCreateList()}" @click="A.createList()">Создать список</button>',
+        '  </div>',
+        '</div>'
+      ].join('')
+    });
+
     app.component('SheetCover', {
       setup: function () { return { store: store, A: A, currentList: currentList }; },
       template: [
@@ -1175,6 +1339,7 @@
         '        <sheet-person v-else-if="store.sheet===\'person\'" />',
         '        <sheet-filters v-else-if="store.sheet===\'filters\'" />',
         '        <sheet-cover v-else-if="store.sheet===\'cover\'" />',
+        '        <sheet-list v-else-if="store.sheet===\'list\'" />',
         '      </div>',
         '    </div>',
         '  </transition>',

@@ -93,16 +93,18 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 .ms-back:hover{ text-decoration:underline; }
 .ms-crumb-note{ color:var(--muted); font-size:13px; }
 
-.ms-listbar{ padding:16px clamp(18px,3vw,40px) 0; }
 
 .ms-body{ flex:1; padding:20px clamp(18px,3vw,40px) 72px; }
 .ms-body--rail{ display:grid; grid-template-columns:minmax(0,1fr) 332px; gap:26px; align-items:start; }
+.ms-body--rail > div:first-child{ min-width:0; }
 
 /* ── правая панель «Вишлист» — как на сайте ── */
 .wl-rail{
   position:sticky; top:20px;
+  /* до нижней кромки окна: 20px сверху + 20px воздуха снизу */
+  height:calc(100vh - 40px);
   background:#EAF7F0; border:1px solid #CDE9DB; border-radius:20px; padding:16px;
-  display:flex; flex-direction:column; gap:12px;
+  display:flex; flex-direction:column; gap:12px; overflow:hidden;
 }
 .wl-rail__head{ display:flex; align-items:center; gap:8px; }
 .wl-rail__switch{
@@ -121,15 +123,29 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 .wl-rail__switch.is-static{ cursor:default; padding-left:4px; }
 .wl-rail__switch.is-static:hover{ background:transparent; }
 
+/* режим «Мои списки»: панель заменяет верхние вкладки */
+.wl-rail--lists{ background:#F5F5F7; border-color:#E4E4E8; }
+.wl-rail--lists .wl-rail__switch b{ background:var(--ink); }
+.wl-rail__row--list{ width:100%; text-align:left; transition:border-color .15s, background .15s; }
+.wl-rail__row--list:hover{ border-color:var(--muted-2); }
+.wl-rail__row--list.is-on{ border-color:var(--green); background:rgba(39,174,96,.07); }
+.wl-rail__cover{
+  width:44px; height:44px; flex:none; border-radius:10px;
+  background-size:cover; background-position:center;
+  display:flex; align-items:center; justify-content:center; font-size:20px;
+}
+.wl-rail__dot{ flex:none; color:var(--green); font-weight:800; }
+
 /* режим подборки для другого человека */
 .wl-rail--pick{ background:#F4F1FB; border-color:#DED6F3; }
 .wl-rail--pick .wl-rail__switch b{ background:#7B61FF; }
 .wl-rail--pick .wl-rail__row{ border-color:#E6E0F5; }
+.wl-rail--pick .wl-rail__mark{ color:#7B61FF; }
 .wl-rail__empty{
   font-size:13px; color:var(--muted); text-align:center; line-height:1.5;
   border:1px dashed #DED6F3; border-radius:14px; padding:22px 14px; background:rgba(255,255,255,.5);
 }
-.wl-rail__mark{ margin-left:8px; font-size:11px; font-weight:700; color:#7B61FF; }
+.wl-rail__mark{ margin-left:8px; font-size:11px; font-weight:700; color:var(--muted-2); }
 .wl-rail__x{
   flex:none; width:24px; height:24px; border-radius:50%;
   color:var(--muted-2); font-size:12px;
@@ -138,6 +154,7 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 }
 .wl-rail__row:hover .wl-rail__x{ opacity:1; }
 .wl-rail__x:hover{ background:var(--field); color:var(--ink); }
+@media (hover:none){ .wl-rail__x{ opacity:1; } }
 .wl-rail__open{
   height:46px; border-radius:12px; background:var(--green); color:#fff;
   font-weight:700; font-size:14px;
@@ -145,12 +162,31 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 }
 .wl-rail__open:hover{ filter:brightness(1.05); }
 .wl-rail--pick .wl-rail__open{ background:#7B61FF; }
-.wl-rail__list{ display:flex; flex-direction:column; gap:8px; max-height:52vh; overflow-y:auto; }
+.wl-rail__list{
+  display:flex; flex-direction:column; gap:8px;
+  flex:1; min-height:0; overflow-y:auto; margin:0 -4px; padding:2px 4px;
+}
+.wl-rail__list::-webkit-scrollbar{ width:6px; }
+.wl-rail__list::-webkit-scrollbar-thumb{ background:rgba(0,0,0,.14); border-radius:3px; }
+.wl-rail__open{ flex:none; }
+.wl-rail__thumb{ width:44px; height:44px; flex:none; border-radius:8px; }
 .wl-rail__row{
   display:flex; align-items:center; gap:9px;
   background:#fff; border:1px solid #E4EFE8; border-radius:14px; padding:9px;
+  transition:opacity .12s, box-shadow .12s, transform .12s;
 }
-.wl-rail__grip{ color:#c7d3cb; font-size:12px; flex:none; letter-spacing:-3px; }
+/* перетаскивание порядка */
+.wl-rail__grip{
+  flex:none; color:#c8d2cc; font-size:12px; letter-spacing:-3px; padding:0 1px;
+  cursor:grab; transition:color .15s;
+}
+.wl-rail__row:hover .wl-rail__grip{ color:var(--muted-2); }
+.wl-rail__row:active .wl-rail__grip{ cursor:grabbing; }
+.wl-rail__row.is-dragging{ opacity:.4; }
+.wl-rail__row.is-over{
+  box-shadow:0 0 0 2px var(--green); transform:translateY(1px);
+}
+.wl-rail--pick .wl-rail__row.is-over{ box-shadow:0 0 0 2px #7B61FF; }
 .wl-rail__meta{ min-width:0; flex:1; }
 .wl-rail__name{
   font-size:12.5px; font-weight:500; line-height:1.25;
@@ -174,6 +210,14 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
   background:#fff; border-bottom:1px solid var(--line);
   height:60px; padding:0 clamp(16px,4vw,44px);
   display:flex; align-items:center; justify-content:space-between; gap:16px;
+}
+.deck__stagebody--rail{
+  display:grid; grid-template-columns:minmax(0,1fr) 332px; gap:26px; align-items:start;
+}
+.deck__stagebody--rail > .screen{ min-width:0; }
+@media (max-width:1100px){
+  .deck__stagebody--rail{ grid-template-columns:minmax(0,1fr); }
+  .deck__stagebody--rail .wl-rail{ display:none; }
 }
 .deck__switch{
   margin-left:auto; font-size:13px; font-weight:600; color:var(--green);
@@ -218,7 +262,6 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
   letter-spacing:-.02em; line-height:1.15; max-width:22ch;
 }
 .deck__stage .story-sub{ margin-top:10px; color:var(--muted); font-size:1.02rem; max-width:62ch; }
-.deck__listbar{ margin-top:22px; }
 .deck__stage .screen{
   margin-top:18px; background:#fff; border:1px solid var(--line);
   border-radius:16px; padding:clamp(18px,3vw,30px);
