@@ -428,6 +428,10 @@
       store.currentListId = id; store.sheet = null; store.openMenu = null;
       toast('Вишлист: ' + currentList.value.title);
     },
+    /* пустые приоритеты не показываем — пустой вишлист получает одну заглушку */
+    filledTiers: function (groups) {
+      return groups.filter(function (g) { return g.items.length > 0; });
+    },
     /* пустая правая панель: один и тот же вид во всех режимах.
        В подсказке показываем настоящую кнопку карточки, а не её символ. */
     railEmpty: function () {
@@ -469,7 +473,8 @@
       store.currentListId = id;
       store.listView = 'items';
       store.sheet = null;
-      A.go('lists');
+      /* с экрана идей остаёмся на месте: новый вишлист сразу виден в панели справа */
+      if (store.route !== 'ideas') A.go('lists');
       toast('Вишлист «' + title + '» создан');
     },
     copyLink: function () { toast('Ссылка скопирована'); },
@@ -736,6 +741,27 @@
       ].join('')
     });
 
+    /* ── статус «занято» подписью прямо в кнопке-действии ── */
+    app.component('TakenPill', {
+      props: ['item'],
+      setup: function () { return { A: A }; },
+      computed: {
+        mine: function () { return A.isMine(this.item); },
+        label: function () { return A.takenLabel(this.item); },
+        hint: function () { return this.mine ? 'Снять резерв' : this.label; }
+      },
+      methods: { release: function () { if (this.mine) A.reserve(this.item, null); } },
+      template: [
+        '<span class="wantbtn wantbtn--label" :class="{\'is-on\':mine}"',
+        '      :title="hint" @click="release()">',
+        '  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">',
+        '    <path fill="currentColor" d="M17 9V7A5 5 0 0 0 7 7v2H5.8A1.8 1.8 0 0 0 4 10.8v8.4c0 1 .8 1.8 1.8 1.8h12.4c1 0 1.8-.8 1.8-1.8v-8.4c0-1-.8-1.8-1.8-1.8Zm-8-2a3 3 0 0 1 6 0v2H9Z"/>',
+        '  </svg>',
+        '  {{ label }}',
+        '</span>'
+      ].join('')
+    });
+
     /* ── действия дарителя в углу снимка ──
        Резерв — основная кнопка, того же размера и формы, что «Хочу».
        Сбор нужен реже, поэтому стоит рядом уменьшённым и тихим. */
@@ -750,6 +776,7 @@
         /* открыт общий сбор — личного резерва уже нет, остаётся только скинуться */
         showHold: function () {
           if (this.bought) return false;
+          if (this.item.reserved) return false;   /* статус показывает taken-pill */
           return !this.pooled;
         },
         joinable: function () {
@@ -782,6 +809,7 @@
         '      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M16.3 14.6c2.3.2 4.1 1.7 4.1 3.8"/>',
         '    </svg>',
         '  </button>',
+        '  <taken-pill v-if="item.reserved" :item="item" />',
         '  <button v-if="showHold" class="wantbtn wantbtn--hold" :class="{\'is-on\':mine}" @click="toggle()"',
         '          :title="reserveLabel" :aria-label="reserveLabel" :disabled="A.otherHolds(item)">',
         '    <svg v-if="mine" viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">',
@@ -885,10 +913,6 @@
         '    <thumb :image="item.img" cls="present__thumb" />',
         /* лента с плотной заливкой — читается на любом фото */
         '    <div v-if="item.oldPrice" class="present__sale">−{{ A.discount(item) }}%</div>',
-        '    <div v-if="item.reserved" class="present__tape" :class="{\'is-mine\':A.isMine(item)}">',
-        '      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M17 9V7A5 5 0 0 0 7 7v2H5.8A1.8 1.8 0 0 0 4 10.8v8.4c0 1 .8 1.8 1.8 1.8h12.4c1 0 1.8-.8 1.8-1.8v-8.4c0-1-.8-1.8-1.8-1.8Zm-8-2a3 3 0 0 1 6 0v2H9Z"/></svg>',
-        '      {{ A.takenLabel(item) }}',
-        '    </div>',
         /* угол снимка — для действий, которые должны лежать на фото */
         '    <slot name="media" />',
         '  </div>',
@@ -996,24 +1020,36 @@
 
         '  <activity-body v-if="store.listView===\'activity\'" />',
         '  <template v-else>',
-        '  <div v-for="g in tierGroups" :key="g.key" class="tier">',
+        '  <div v-for="g in A.filledTiers(tierGroups)" :key="g.key" class="tier">',
         '    <div class="tier__label"><tier-icon :tier="g.key" /> {{ g.label }} <span class="tier__count">{{ g.items.length }}</span></div>',
-        '    <div v-if="g.items.length" class="grid grid--4">',
+        '    <div class="grid grid--4">',
         '      <gift-card v-for="it in g.items" :key="it.id" :item="it">',
         /* действие в углу снимка — как на карточках идей */
         '        <template #media>'
+        /* статус и действие — одной группой в углу, как у дарителя */
+        + '<div class="cornerset">'
+        + '<taken-pill v-if="it.reserved" :item="it" />'
         + '<button class="wantbtn wantbtn--edit" @click="A.editItem(it)" title="Изменить" aria-label="Изменить">'
         + '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
         + '<path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"'
         + ' d="M16.5 4.4a2 2 0 0 1 2.8 2.8L8.8 17.7l-3.7.9.9-3.7Z"/>'
         + '<path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" d="m14.8 6.1 3.1 3.1"/>'
         + '</svg></button>'
+        + '</div>'
         + '<button v-if="g.key!==\'top\'" class="present__pin" @click="A.bump(it,\'top\')" title="В «Больше всего хочу»">'
         + '<tier-icon tier="top" /></button>'
         + '</template>',
         '      </gift-card>',
         '    </div>',
-        '    <div v-else class="emptytier">Пусто — добавьте подарок в этот приоритет</div>',
+        '  </div>',
+        /* совсем пустой вишлист — одна заглушка вместо трёх пустых приоритетов */
+        '  <div v-if="!currentList.items.length" class="listempty">',
+        '    <div class="listempty__title">В этом вишлисте пока пусто</div>',
+        '    <p class="listempty__hint">Добавьте подарок ссылкой из магазина или отметьте идею на странице «Идеи подарков».</p>',
+        '    <div class="listempty__acts">',
+        '      <button class="btn btn--green btn--sm" @click="A.openSheet(\'gift\')">＋ Добавить подарок</button>',
+        '      <button class="btn btn--ghost btn--sm" @click="A.go(\'ideas\')">Смотреть идеи</button>',
+        '    </div>',
         '  </div>',
         '  </template>',
         '</div>'

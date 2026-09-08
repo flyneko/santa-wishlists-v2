@@ -91,9 +91,14 @@ a:hover{text-decoration:underline}
   line-height:1.15; text-shadow:0 1px 12px rgba(0,0,0,.3);
 }
 .hero__meta{
-  display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:8px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:4px 0; margin-top:8px;
   font-size:13px; font-weight:600; color:rgba(255,255,255,.9);
   text-shadow:0 1px 8px rgba(0,0,0,.35);
+}
+/* факты разделяем точкой, а не пустотой — так строка читается как одна */
+.hero__meta > span{ display:inline-flex; align-items:center; }
+.hero__meta > span + span::before{
+  content:"•"; margin:0 9px; opacity:.45; font-weight:700;
 }
 .hero__acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
 .hact{
@@ -268,23 +273,27 @@ a:hover{text-decoration:underline}
 .present__add--flat{ background:transparent; color:var(--muted); font-weight:600; height:32px; }
 .present__add--flat:hover{ background:var(--field); color:var(--ink); }
 
-/* «уже дарят» — лента поверх фото. Заливка плотная, без прозрачности,
-   поэтому надпись одинаково читается на светлом и тёмном снимке. */
+/* «уже дарят» — подпись внутри самой кнопки-действия, а не лентой на фото:
+   статус и действие живут в одном месте, в углу снимка */
 .present.is-taken .present__thumb{ filter:grayscale(.5); opacity:.62; }
 .present.is-taken .present__name,
 .present.is-taken .present__price{ color:var(--muted-2); }
 .present.is-taken .present__price{ text-decoration:line-through; text-decoration-thickness:1.5px; }
-.present__tape{
-  position:absolute; left:0; right:0; top:0; z-index:3;
-  display:flex; align-items:center; justify-content:center; gap:7px;
-  height:30px; border-radius:10px 10px 0 0;
-  background:#2C2C2E; color:#fff;
-  font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+.wantbtn--label{
+  width:auto; min-width:0; height:34px; padding:0 13px 0 11px; gap:7px;
+  border-radius:999px; background:#2C2C2E; color:#fff;
+  font-size:11.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+  white-space:nowrap; box-shadow:0 3px 11px rgba(0,0,0,.24); cursor:default;
 }
-.present__tape.is-mine{ background:var(--green); }
-/* угловые кнопки уходят под ленту, чтобы не наезжать на неё */
-.present.is-taken .present__pin,
-.present.is-taken .present__dismiss{ top:38px; }
+.wantbtn--label:hover{ transform:none; box-shadow:0 3px 11px rgba(0,0,0,.24); }
+/* свой резерв можно снять кликом по подписи */
+.wantbtn--label.is-on{
+  background:linear-gradient(135deg,#5BD68B 0%,#27AE60 100%);
+  box-shadow:0 4px 14px rgba(39,174,96,.4); cursor:pointer;
+}
+.wantbtn--label.is-on:hover{ transform:scale(1.03); }
+/* в группе с другой кнопкой подпись чуть компактнее, чтобы пара влезала в карточку */
+.cornerset .wantbtn--label{ height:32px; font-size:11px; padding:0 11px 0 9px; }
 
 .card__name{
   font-size:14px;line-height:1.3;font-weight:500;
@@ -859,3 +868,15 @@ a:hover{text-decoration:underline}
 
 
 .nowrap{ white-space:nowrap; }
+
+/* ───────── пустой вишлист: одна заглушка вместо пустых приоритетов ───────── */
+.listempty{
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  padding:56px 20px 64px;
+}
+.listempty__title{ font-size:19px; font-weight:800; letter-spacing:-.02em; }
+.listempty__hint{
+  margin-top:8px; max-width:380px;
+  font-size:14px; line-height:1.55; color:var(--muted); text-wrap:balance;
+}
+.listempty__acts{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:20px; }
