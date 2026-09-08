@@ -838,6 +838,7 @@
         '  <div class="present__media">',
         '    <thumb :image="item.img" cls="present__thumb" />',
         /* лента с плотной заливкой — читается на любом фото */
+        '    <div v-if="item.oldPrice" class="present__sale">−{{ A.discount(item) }}%</div>',
         '    <div v-if="item.reserved" class="present__tape" :class="{\'is-mine\':A.isMine(item)}">',
         '      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M17 9V7A5 5 0 0 0 7 7v2H5.8A1.8 1.8 0 0 0 4 10.8v8.4c0 1 .8 1.8 1.8 1.8h12.4c1 0 1.8-.8 1.8-1.8v-8.4c0-1-.8-1.8-1.8-1.8Zm-8-2a3 3 0 0 1 6 0v2H9Z"/></svg>',
         '      {{ A.takenLabel(item) }}',
@@ -850,7 +851,6 @@
         '    <div class="present__price">',
         '      {{ A.money(item.price) }}',
         '      <s v-if="item.oldPrice">{{ A.money(item.oldPrice) }}</s>',
-        '      <span v-if="item.oldPrice" class="cut">−{{ A.discount(item) }}%</span>',
         /* «почему это здесь» — значок у цены, текст всплывает по наведению */
         '      <span v-if="item.reason" class="why" tabindex="0" :aria-label="item.reason">',
         '        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">',
@@ -1052,7 +1052,11 @@
         '    <div v-for="col in cols" :key="col.key" class="carousel">',
         '      <button class="carousel__head" @click="A.openCollection(col)">',
         '        <span class="section-title">{{ col.title }}</span>',
-        '        <span class="carousel__all">Все идеи →</span>',
+        '        <span class="carousel__all">Все идеи',
+        '          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">',
+        '            <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m9.5 5.5 7 6.5-7 6.5"/>',
+        '          </svg>',
+        '        </span>',
         '      </button>',
         '      <swipe-row :count="A.live(col.items).length">',
         '        <div v-for="it in A.live(col.items)" :key="it.id" class="swiper-slide carousel__card">',
