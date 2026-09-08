@@ -132,6 +132,7 @@
       currentListId: 'l1',
       listView: 'items',          // items | activity — тело страницы «Мои списки»
       drag: null,                 // { kind:'wish'|'pick', from, over } — перетаскивание в панели
+      spot: null,                 // подсвеченная область в презентации: screen | rail
 
       lists: [
         seedList('l1', 'День рождения', '🎂', '14 марта', good(3).img, [
@@ -185,6 +186,10 @@
         idea(33, 'часто берут к этому набору', '')
       ],
       ideasView: 'browse',        // browse (карусели) | filtered (список)
+      feed: [],                   // бесконечная лента внизу страницы идей
+      feedPage: 0,
+      feedLoading: false,
+      feedDone: false,
       activeFilter: null,         // { title, items } когда включён фильтр
       ideasOther: ideasOtherArr,
       collections: [
@@ -261,14 +266,21 @@
     return currentList.value.items.filter(function (i) { return i.reserved; }).length;
   });
   function poolItem() {
-    if (!store.poolItemId) return null;
     var found = null;
+    if (store.poolItemId) {
+      store.lists.forEach(function (l) {
+        l.items.forEach(function (i) { if (i.id === store.poolItemId) found = i; });
+      });
+      if (found) return found;
+      Object.keys(store.shortlists).forEach(function (k) {
+        store.shortlists[k].forEach(function (i) { if (i.id === store.poolItemId) found = i; });
+      });
+      if (found) return found;
+    }
+    /* на экран зашли не по кнопке (прямая ссылка, история в презентации) —
+       показываем товар, по которому сбор уже идёт, вместо пустой страницы */
     store.lists.forEach(function (l) {
-      l.items.forEach(function (i) { if (i.id === store.poolItemId) found = i; });
-    });
-    if (found) return found;
-    Object.keys(store.shortlists).forEach(function (k) {
-      store.shortlists[k].forEach(function (i) { if (i.id === store.poolItemId) found = i; });
+      l.items.forEach(function (i) { if (!found && i.pool) found = i; });
     });
     return found;
   }
@@ -297,7 +309,7 @@
 
   /* ───────── действия ───────── */
   var money = function (n) { return n.toLocaleString('ru-RU') + ' ₽'; };
-  var toastT;
+  var toastT, spotT;
   function toast(m) {
     store.toastMsg = m;
     clearTimeout(toastT);
@@ -315,6 +327,12 @@
       if (window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     toggleAside: function () { store.asideCollapsed = !store.asideCollapsed; },
+    /* короткая подсветка области — «смотрите сюда» в презентации */
+    spotlight: function (name) {
+      store.spot = name;
+      clearTimeout(spotT);
+      spotT = setTimeout(function () { store.spot = null; }, 1900);
+    },
     reset: function () { Object.assign(store, freshState()); toast('Данные сброшены'); },
 
     openSheet: function (name) {
@@ -595,6 +613,23 @@
     },
     clearIdeasFilter: function () { store.ideasView = 'browse'; store.activeFilter = null; },
 
+    /* ── бесконечная лента: подгружаем порциями, пока не упрёмся в предел ── */
+    feedMore: function () {
+      if (store.feedLoading) return;
+      if (store.feedDone) return;
+      store.feedLoading = true;
+      setTimeout(function () {
+        var page = store.feedPage, step = 12;
+        for (var k = 0; k < step; k++) {
+          /* шаг 7 по каталогу — чтобы соседние карточки не повторяли друг друга */
+          store.feed.push(idea((page * step + k * 7 + page) % GOODS.length, ''));
+        }
+        store.feedPage = page + 1;
+        store.feedLoading = false;
+        if (store.feed.length >= 96) store.feedDone = true;   /* предел макета */
+      }, 420);
+    },
+
     addIdeaToList: function (it) {
       if (it.saved) return;
       it.saved = true;
@@ -822,6 +857,39 @@
         '    </svg>',
         '  </button>',
         '</div>'
+      ].join('')
+    });
+
+    /* ── бесконечная лента подарков внизу страницы идей ── */
+    app.component('FeedBlock', {
+      setup: function () { return { store: store, A: A }; },
+      mounted: function () {
+        if (!store.feed.length) A.feedMore();
+        var self = this;
+        if (typeof IntersectionObserver !== 'function') return;   /* кнопка «Показать ещё» остаётся запасным вариантом */
+        this.io = new IntersectionObserver(function (rows) {
+          rows.forEach(function (r) { if (r.isIntersecting) A.feedMore(); });
+        }, { rootMargin: '400px 0px' });
+        if (this.$refs.sentinel) this.io.observe(this.$refs.sentinel);
+      },
+      beforeUnmount: function () { if (this.io) this.io.disconnect(); },
+      template: [
+        '<section class="feed">',
+        '  <div class="feed__head"><span class="section-title">Бесконечная лента подарков</span></div>',
+        '  <div class="grid grid--4">',
+        '    <gift-card v-for="it in A.live(store.feed)" :key="it.id" :item="it">',
+        '      <template #media>'
+        + '<want-button :item="it" />'
+        + '<button class="present__dismiss" @click="A.dismissIdea(it)" :title="A.dismissTitle()">✕</button>'
+        + '</template>',
+        '    </gift-card>',
+        '  </div>',
+        '  <div ref="sentinel" class="feed__more">',
+        '    <span v-if="store.feedLoading" class="feed__spin" aria-label="Загружаем"></span>',
+        '    <button v-else-if="!store.feedDone" class="btn btn--outline btn--sm" @click="A.feedMore()">Показать ещё</button>',
+        '    <span v-else class="feed__end">Вы посмотрели все идеи на сегодня</span>',
+        '  </div>',
+        '</section>'
       ].join('')
     });
 
@@ -1082,7 +1150,7 @@
         '          <button class="whoswitch" :class="{\'is-other\':store.ideasFor===\'other\'}" @click.stop="A.toggleMenu(\'who\')" title="Выбрать, кому подбираем">',
         '            <span v-if="isSelf">себя</span>',
         '            <span v-else><span class="who__ava" :style="{background:recipient.color}">{{ recipient.name.charAt(0) }}</span>{{ recipient.short }}</span>',
-        '            <span class="dd__caret">▾</span>',
+        '            <span class="dd__caret" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m6 9.5 6 6 6-6"/></svg></span>',
         '          </button>',
         '          <div v-if="store.openMenu===\'who\'" class="dd__panel dd__panel--left" @click.stop>',
         '            <div class="dd__title">Кому подбираем</div>',
@@ -1155,6 +1223,7 @@
         '        </div>',
         '      </swipe-row>',
         '    </div>',
+        '    <feed-block />',
         '  </template>',
 
         /* ── фильтр включён: плоский список ── */
@@ -1343,6 +1412,32 @@
     });
 
     /* ── правая панель «Вишлист» (как на экране MySanta) ── */
+    /* ── строка вишлиста: одна и та же в панели и в выпадающем списке ── */
+    app.component('WishlistRow', {
+      props: ['list'],
+      setup: function () { return { store: store, A: A }; },
+      computed: { on: function () { return this.list.id === store.currentListId; } },
+      template: [
+        '<button class="wl-rail__row wl-rail__row--list" :class="{\'is-on\':on}" @click="A.setList(list.id)">',
+        '  <span class="wl-rail__cover" :style="A.heroStyle(list)">{{ list.emoji }}</span>',
+        '  <div class="wl-rail__meta">',
+        '    <div class="wl-rail__name wl-rail__name--list">{{ list.title }}</div>',
+        /* счётчик рядом с названием, дата — следом через точку */
+        '    <div class="wl-rail__meta-line">',
+        '      <span class="wl-rail__count">{{ list.items.length }} подарков</span>',
+        '      <span v-if="list.date" class="wl-rail__date">{{ list.date }}</span>',
+        '    </div>',
+        '  </div>',
+        /* выбранный вишлист помечаем галочкой, а не заливкой строки */
+        '  <span class="wl-rail__check" :class="{\'is-on\':on}" aria-hidden="true">',
+        '    <svg viewBox="0 0 24 24" width="13" height="13">',
+        '      <path fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" d="m5.5 12.4 4.2 4.2 8.8-9.2"/>',
+        '    </svg>',
+        '  </span>',
+        '</button>'
+      ].join('')
+    });
+
     /* ── заглушка пустой правой панели (одна на все режимы) ── */
     app.component('RailEmpty', {
       setup: function () { return { A: A }; },
@@ -1372,7 +1467,7 @@
         return { store: store, A: A, currentList: currentList, recipient: recipient, shortlist: shortlist };
       },
       template: [
-        '<div class="railcol">',
+        '<div class="railcol" :class="{\'is-spot\':store.spot===\'rail\'}">',
         /* переход между идеями и списками — вместо верхних вкладок */
         /* крупная карточка-переход вместо верхних вкладок */
         '  <button class="navcard" :class="A.navCard().cls" @click="A.go(A.navCard().route)">',
@@ -1399,23 +1494,7 @@
         '  </div>',
         '  <rail-empty v-if="!store.lists.length" />',
         '  <div v-else class="wl-rail__list">',
-        '    <button v-for="l in store.lists" :key="l.id" class="wl-rail__row wl-rail__row--list" :class="{\'is-on\':l.id===store.currentListId}" @click="A.setList(l.id)">',
-        '      <span class="wl-rail__cover" :style="A.heroStyle(l)">{{ l.emoji }}</span>',
-        '      <div class="wl-rail__meta">',
-        '        <div class="wl-rail__name wl-rail__name--list">{{ l.title }}</div>',
-        /* счётчик и дата — одной строкой, но разделены и разного веса */
-        '        <div class="wl-rail__meta-line">',
-        '          <span class="wl-rail__count">{{ l.items.length }} подарков</span>',
-        '          <span v-if="l.date" class="wl-rail__date">{{ l.date }}</span>',
-        '        </div>',
-        '      </div>',
-        /* выбранный вишлист помечаем галочкой, а не заливкой строки */
-        '      <span class="wl-rail__check" :class="{\'is-on\':l.id===store.currentListId}" aria-hidden="true">',
-        '        <svg viewBox="0 0 24 24" width="13" height="13">',
-        '          <path fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" d="m5.5 12.4 4.2 4.2 8.8-9.2"/>',
-        '        </svg>',
-        '      </span>',
-        '    </button>',
+        '    <wishlist-row v-for="l in store.lists" :key="l.id" :list="l" />',
         '  </div>',
         '  <button class="wl-rail__open" @click="A.newList()">＋ Новый вишлист</button>',
         '</aside>',
@@ -1452,18 +1531,15 @@
         '  <div class="wl-rail__head">',
         '    <div class="dd">',
         '      <button class="wl-rail__switch" @click.stop="A.toggleMenu(\'raillist\')">',
-        '        <span class="wl-rail__emoji">{{ currentList.emoji }}</span>',
+        /* обложка вишлиста — та же плитка, что в строках списка */
+        '        <span class="wl-rail__cover wl-rail__cover--ava" :style="A.heroStyle(currentList)">{{ currentList.emoji }}</span>',
         '        <span class="wl-rail__title">{{ currentList.title }}</span>',
         '        <b>{{ currentList.items.length }}</b>',
-        '        <span class="dd__caret">▾</span>',
+        '        <span class="dd__caret" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m6 9.5 6 6 6-6"/></svg></span>',
         '      </button>',
         '      <div v-if="store.openMenu===\'raillist\'" class="dd__panel dd__panel--left" @click.stop>',
         '        <div class="dd__title">Мои вишлисты</div>',
-        '        <button v-for="l in store.lists" :key="l.id" class="dd__item" :class="{\'is-on\':l.id===store.currentListId}" @click="A.setList(l.id)">',
-        '          <span class="dd__emoji">{{ l.emoji }}</span>{{ l.title }}',
-        '          <span class="dd__n">{{ l.items.length }}</span>',
-        '          <span v-if="l.id===store.currentListId" class="dd__check">✓</span>',
-        '        </button>',
+        '        <wishlist-row v-for="l in store.lists" :key="l.id" :list="l" />',
         '        <button class="dd__item dd__item--add" @click="A.newList()">＋ Новый вишлист</button>',
         '      </div>',
         '    </div>',
