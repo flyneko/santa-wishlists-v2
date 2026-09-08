@@ -203,6 +203,33 @@ a:hover{text-decoration:underline}
   background:linear-gradient(135deg,#FF7A7A 0%,#F74F4F 100%); color:#fff;
   box-shadow:0 4px 16px rgba(247,79,79,.45);
 }
+/* пара кнопок в углу: основное действие крупное, вторичное — рядом и тише */
+.cornerset{
+  position:absolute; z-index:4; right:8px; bottom:8px;
+  display:flex; align-items:center; gap:7px;
+}
+.cornerset .wantbtn{ position:static; }
+.wantbtn--sm{ width:34px; height:34px; box-shadow:0 2px 9px rgba(0,0,0,.18); }
+.wantbtn[disabled]{ opacity:.45; pointer-events:none; }
+
+/* «скинуться вместе» — вторичное, поэтому приглушённое до наведения.
+   Когда сбор уже открыт, кнопка остаётся одна и берёт полный размер и цвет. */
+.wantbtn--pool{ color:var(--muted); }
+.wantbtn--pool:hover{ color:var(--green); box-shadow:0 4px 14px rgba(39,174,96,.3); }
+.wantbtn--pool:not(.wantbtn--sm){ color:var(--green); }
+.wantbtn--pool.is-on{
+  background:linear-gradient(135deg,#5BD68B 0%,#27AE60 100%); color:#fff;
+  box-shadow:0 4px 16px rgba(39,174,96,.45);
+}
+
+/* «зарезервировать» — основное действие дарителя */
+.wantbtn--hold{ color:var(--green); }
+.wantbtn--hold:hover{ box-shadow:0 5px 18px rgba(39,174,96,.36); }
+.wantbtn--hold.is-on{
+  background:linear-gradient(135deg,#5BD68B 0%,#27AE60 100%); color:#fff;
+  box-shadow:0 4px 16px rgba(39,174,96,.45);
+}
+
 /* мой вишлист: та же кнопка — «Изменить» */
 .wantbtn--edit{ color:var(--green); }
 .wantbtn--edit:hover{ box-shadow:0 5px 18px rgba(39,174,96,.34); }
@@ -275,7 +302,6 @@ a:hover{text-decoration:underline}
 .ideas-title .dd__panel{
   font-size:14px; font-weight:600; letter-spacing:normal; line-height:1.4;
 }
-.geo{ color:var(--red); font-weight:600; font-size:14px; white-space:nowrap; }
 
 /* ───────────────────────── добавить подарок (карточка) ───────────────────────── */
 
@@ -293,11 +319,14 @@ a:hover{text-decoration:underline}
 
 /* ───────────────────────── add-a-gift ───────────────────────── */
 .field-row{display:flex;gap:8px}
+/* без width/flex:none поле в колоночном .sheet__row растягивалось по высоте:
+   flex-basis:0 там управляет высотой, а не шириной */
 .field{
-  flex:1;min-width:0;height:44px;padding:0 14px;
+  width:100%;min-width:0;height:44px;flex:none;padding:0 14px;
   border-radius:var(--radius);border:2px solid var(--line);background:#fff;
   font-size:14px;color:var(--ink);
 }
+.field-row .field{ flex:1 1 auto; width:auto; }
 .field--mini{height:36px;font-size:13px}
 .field:focus{outline:none;border-color:var(--ink)}
 .field::placeholder{color:var(--muted-2)}
@@ -313,7 +342,7 @@ a:hover{text-decoration:underline}
 .tchip:hover{background:var(--field)}
 .tchip.is-on{background:var(--mint);border-color:var(--green)}
 .preview__tiers{gap:8px}
-.preview__tiers .field--mini{flex:1 0 100%;min-width:120px}
+.preview__tiers .field--mini{flex:1 0 100%;width:auto;min-width:120px}
 
 .ideas-mini{margin-top:20px;padding-top:16px;border-top:1px solid rgba(0,0,0,.09)}
 .ideas-mini .grid{margin-top:10px}
@@ -346,7 +375,7 @@ a:hover{text-decoration:underline}
 .why:focus-visible .why__tip{ opacity:1; transform:translateY(0); }
 
 /* ───────────────────────── search + filters ───────────────────────── */
-.searchbar{position:relative;margin-bottom:16px}
+.searchbar{position:relative;margin-bottom:26px}
 .searchbar .field{width:100%;height:56px;font-size:16px;padding-right:106px;border-radius:14px}
 .field__go{
   position:absolute;right:7px;top:7px;width:42px;height:42px;border-radius:10px;
@@ -427,10 +456,10 @@ a:hover{text-decoration:underline}
 }
 .dd__check{ color:var(--green); font-weight:800; margin-left:6px; }
 .dd__item.is-on .dd__n{ margin-left:auto; }
-.dd__item--add{ color:var(--green); justify-content:center; border:1px dashed var(--line); }
+.dd__item--add{ color:var(--green); justify-content:center; border:1px dashed var(--line); margin-top:8px; }
 .dd__sep{ height:1px; background:var(--line); margin:8px 4px; }
 .dd__add{ display:flex; gap:8px; padding:4px; }
-.dd__add .field{ flex:1; min-width:0; }
+.dd__add .field{ flex:1 1 auto; width:auto; min-width:0; }
 .dd__add .btn{ flex:none; padding:0 14px; }
 
 /* переключатель «кому подбираем» рядом с заголовком */
@@ -481,8 +510,6 @@ a:hover{text-decoration:underline}
   display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
   background:var(--mint); border-radius:12px; padding:14px 16px; font-size:14px; font-weight:600;
 }
-.shortlist-actions{ display:flex; flex-direction:column; gap:8px; }
-.shortlist-actions .tag{ align-self:flex-start; }
 
 /* ───────────────────────── карусели подборок ───────────────────────── */
 .section-title{ font-size:1.4rem; font-weight:800; letter-spacing:-.02em; }
@@ -652,7 +679,7 @@ a:hover{text-decoration:underline}
 .btn.is-off{ opacity:.45; pointer-events:none; }
 
 .personname{ display:flex; align-items:center; gap:12px; }
-.personname .field{ flex:1; min-width:0; }
+.personname .field{ flex:1 1 auto; width:auto; min-width:0; }
 
 /* сегментированный переключатель: пол, возраст */
 /* .seg уже занят пилюлей в .segbar — контейнеру нужно своё имя */
@@ -740,13 +767,68 @@ a:hover{text-decoration:underline}
   border-radius:10px; padding:12px 14px; margin-bottom:4px;
 }
 
-/* основное действие + иконка «скинуться» в одну строку */
-.actrow{ display:flex; gap:8px; align-items:stretch; }
-.actrow .present__add{ flex:1; min-width:0; }
-.iconbtn{
-  flex:none; width:40px; height:40px; border-radius:10px;
-  border:1.5px solid var(--green); background:#fff; color:var(--green);
-  display:flex; align-items:center; justify-content:center;
-  transition:background .15s, color .15s;
+
+/* ─────────── карточка-переход над правой панелью ───────────
+   Крупный баннер вместо вкладок: жирный заголовок, ссылка-действие
+   и объёмная графика справа. Картинки — Twemoji (CC-BY 4.0), img/. */
+.navcard{
+  position:relative; overflow:hidden; isolation:isolate;
+  display:block; width:100%; text-align:left;
+  min-height:124px; padding:16px 18px 14px; border-radius:18px;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s, filter .18s;
 }
-.iconbtn:hover{ background:var(--green); color:#fff; }
+.navcard:hover{ transform:translateY(-3px); }
+.navcard:active{ transform:translateY(-1px) scale(.99); }
+/* Блик уводим в правый верхний угол — под графику, а не под заголовок:
+   белое свечение прямо за белым текстом съедало его читаемость. */
+.navcard::before{
+  content:""; position:absolute; inset:0; z-index:0;
+  background:radial-gradient(95% 85% at 92% 2%, rgba(255,255,255,.3) 0%, rgba(255,255,255,0) 60%);
+  pointer-events:none;
+}
+.navcard__title{
+  position:relative; z-index:2; display:block;
+  font-size:23px; font-weight:800; line-height:1.06; letter-spacing:-.03em;
+  max-width:60%;
+}
+.navcard__cta{
+  position:relative; z-index:2; display:inline-flex; align-items:center; gap:8px;
+  margin-top:12px; font-size:13px; font-weight:700;
+  transition:gap .18s;
+}
+.navcard:hover .navcard__cta{ gap:12px; }
+
+/* графика справа: крупный объект с наклоном и маленький акцент */
+.navcard__art{ position:absolute; z-index:1; inset:0; pointer-events:none; }
+.navcard__art-main{
+  position:absolute; right:-6px; bottom:-8px; width:88px; height:88px;
+  transform:rotate(-12deg);
+  filter:drop-shadow(0 7px 13px rgba(0,0,0,.2));
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.navcard:hover .navcard__art-main{ transform:rotate(-4deg) scale(1.06); }
+.navcard__art-side{
+  position:absolute; right:74px; top:12px; width:29px; height:29px;
+  transform:rotate(12deg);
+  filter:drop-shadow(0 4px 9px rgba(0,0,0,.18));
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.navcard:hover .navcard__art-side{ transform:rotate(-6deg) scale(1.12); }
+
+/* к спискам — лаймовый */
+.navcard--lists{
+  background:linear-gradient(135deg,#EAFF7A 0%,#CBF734 46%,#9FE01B 100%);
+  color:#1B2708;
+  box-shadow:0 5px 16px rgba(160,215,30,.24), inset 0 1px 0 rgba(255,255,255,.6);
+}
+.navcard--lists:hover{ box-shadow:0 9px 22px rgba(160,215,30,.32), inset 0 1px 0 rgba(255,255,255,.65); }
+.navcard--lists .navcard__cta{ color:#2F4A08; }
+
+/* к идеям — фуксия */
+.navcard--ideas{
+  background:linear-gradient(135deg,#FF8FC2 0%,#FF4E96 46%,#DE1E77 100%);
+  color:#fff; text-shadow:0 1px 2px rgba(150,10,70,.18);
+  box-shadow:0 5px 16px rgba(255,78,150,.22), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.navcard--ideas:hover{ box-shadow:0 9px 22px rgba(255,78,150,.3), inset 0 1px 0 rgba(255,255,255,.46); }
+.navcard--ideas .navcard__cta{ color:rgba(255,255,255,.94); }

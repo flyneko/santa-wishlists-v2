@@ -8,6 +8,18 @@
   var GOODS = window.WL_GOODS || [];
   function good(i) { return GOODS[i] || GOODS[0] || { name: '', price: 0, img: '' }; }
 
+  /* презентация лежит в корне, прототип — в подпапке: путь к картинкам берём
+     от самого app-core.js, чтобы обе оболочки грузили одни и те же файлы */
+  var BASE = (function () {
+    if (typeof document === 'undefined') return '';
+    var els = document.getElementsByTagName ? document.getElementsByTagName('script') : [];
+    for (var i = 0; i < els.length; i++) {
+      var m = (els[i].src || '').match(/^(.*\/)app-core\.js(?:\?.*)?$/);
+      if (m) return m[1];
+    }
+    return '';
+  })();
+
   var _id = 200;
   function uid() { return 'i' + (++_id); }
 
@@ -297,6 +309,11 @@
     },
     dismissTitle: function () { return store.ideasFor === 'self' ? 'Не моё' : 'Не подходит'; },
     isMine: function (it) { return it.reserved === 'you'; },
+    /* занято другим — резерв недоступен */
+    otherHolds: function (it) {
+      if (!it.reserved) return false;
+      return it.reserved !== 'you';
+    },
     takenLabel: function (it) {
       if (it.reserved === 'bought') return 'Куплено';
       if (A.hasPool(it)) return it.reserved === 'you' ? 'Вы скинулись' : 'Скидываются';
@@ -375,6 +392,17 @@
     setList: function (id) {
       store.currentListId = id; store.sheet = null; store.openMenu = null;
       toast('Список: ' + currentList.value.title);
+    },
+    /* карточка-переход: со списков ведёт к идеям и наоборот */
+    navCard: function () {
+      if (store.route === 'lists') {
+        return { route: 'ideas', cls: 'navcard--ideas', cta: 'Смотреть',
+                 title: 'Идеи<br>подарков',
+                 main: BASE + 'img/1f381.svg', side: BASE + 'img/2728.svg' };
+      }
+      return { route: 'lists', cls: 'navcard--lists', cta: 'Открыть',
+               title: 'Мои<br>списки',
+               main: BASE + 'img/1f4cb.svg', side: BASE + 'img/2b50.svg' };
     },
     listEmoji: LIST_EMOJI,
     newList: function () {
@@ -623,7 +651,6 @@
   }
 
   /* ───────── компоненты ───────── */
-  var POOL = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" d="M9 11.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Zm0-4.7a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2Z"/><path fill="currentColor" d="M16.4 11.4a2.7 2.7 0 1 0 0-5.4 2.7 2.7 0 0 0 0 5.4Zm0-4a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Z"/><path fill="currentColor" d="M9 12.6c-3 0-5.5 1.6-5.5 3.6V19h11v-2.8c0-2-2.5-3.6-5.5-3.6Zm4 4.9H5v-1.3c0-1 1.8-2.1 4-2.1s4 1.1 4 2.1Z"/><path fill="currentColor" d="M16.4 12.8c-.6 0-1.2.1-1.7.2.8.8 1.3 1.9 1.3 3.2V19h4.5v-2.5c0-1.9-1.9-3.7-4.1-3.7Z"/></svg>';
 
   function register(app) {
 
@@ -660,6 +687,67 @@
         '    <path fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" d="M12 5.6v12.8M5.6 12h12.8"/>',
         '  </svg>',
         '</button>'
+      ].join('')
+    });
+
+    /* ── действия дарителя в углу снимка ──
+       Резерв — основная кнопка, того же размера и формы, что «Хочу».
+       Сбор нужен реже, поэтому стоит рядом уменьшённым и тихим. */
+    app.component('GiverActions', {
+      props: ['item'],
+      setup: function () { return { store: store, A: A }; },
+      computed: {
+        mine: function () { return this.item.reserved === 'you'; },
+        free: function () { return !this.item.reserved; },
+        bought: function () { return this.item.reserved === 'bought'; },
+        pooled: function () { return A.hasPool(this.item); },
+        /* открыт общий сбор — личного резерва уже нет, остаётся только скинуться */
+        showHold: function () {
+          if (this.bought) return false;
+          return !this.pooled;
+        },
+        joinable: function () {
+          if (this.bought) return false;
+          if (this.free) return true;
+          /* к чужому открытому сбору присоединиться можно, к чужому резерву — нет */
+          return this.pooled;
+        },
+        reserveLabel: function () { return this.mine ? 'Вы дарите — снять резерв' : 'Зарезервировать'; },
+        poolLabel: function () {
+          if (!this.pooled) return 'Скинуться вместе';
+          return this.mine ? 'Вы участвуете в сборе' : 'Присоединиться к сбору';
+        }
+      },
+      methods: {
+        toggle: function () {
+          if (this.mine) { A.reserve(this.item, null); return; }
+          A.reserve(this.item, 'you');
+        }
+      },
+      template: [
+        '<div class="cornerset">',
+        /* когда идёт сбор, кнопка сбора остаётся единственной — значит, основной */
+        '  <button v-if="joinable" class="wantbtn wantbtn--pool" :class="{\'wantbtn--sm\':showHold,\'is-on\':pooled}"',
+        '          @click="A.startPool(item)" :title="poolLabel" :aria-label="poolLabel">',
+        '    <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">',
+        '      <circle fill="none" stroke="currentColor" stroke-width="1.8" cx="9" cy="8.2" r="3.1"/>',
+        '      <circle fill="none" stroke="currentColor" stroke-width="1.8" cx="16.6" cy="8.7" r="2.4"/>',
+        '      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M3.6 18.4c0-2.4 2.4-4.1 5.4-4.1s5.4 1.7 5.4 4.1"/>',
+        '      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M16.3 14.6c2.3.2 4.1 1.7 4.1 3.8"/>',
+        '    </svg>',
+        '  </button>',
+        '  <button v-if="showHold" class="wantbtn wantbtn--hold" :class="{\'is-on\':mine}" @click="toggle()"',
+        '          :title="reserveLabel" :aria-label="reserveLabel" :disabled="A.otherHolds(item)">',
+        '    <svg v-if="mine" viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">',
+        '      <path fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" d="m5.5 12.4 4.2 4.2 8.8-9.2"/>',
+        '    </svg>',
+        '    <svg v-else viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">',
+        '      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3.9 8.9h16.2v3.4H3.9zM5.3 12.3h13.4v7.4H5.3z"/>',
+        '      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 8.9v10.8"/>',
+        '      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 8.9S10.6 4.3 8.4 4.3a2.3 2.3 0 0 0 0 4.6Zm0 0s1.4-4.6 3.6-4.6a2.3 2.3 0 0 1 0 4.6Z"/>',
+        '    </svg>',
+        '  </button>',
+        '</div>'
       ].join('')
     });
 
@@ -933,9 +1021,6 @@
         '        </span>',
         '      </h1>',
         '    </div>',
-        '    <div class="ideas-head__right">',
-        '      <span class="geo">📍 Москва</span>',
-        '    </div>',
         '  </div>',
 
         '  <div class="searchbar">',
@@ -1026,19 +1111,13 @@
         '  </div>',
         '  <div v-else class="grid grid--4" style="margin-top:20px">',
         '    <gift-card v-for="it in shortlist" :key="it.id" :item="it">',
-        '      <button class="present__dismiss" @click="A.removeFromShortlist(it)" title="Убрать из подборки">✕</button>',
-        '      <div class="shortlist-actions">',
-        '        <template v-if="!it.reserved">',
-        '          <div class="actrow">',
-        '            <button class="present__add" @click="A.reserve(it,\'you\')">Зарезервировать</button>',
-        '            <button class="iconbtn" @click="A.startPool(it)" title="Скинуться вместе" aria-label="Скинуться вместе">' + POOL + '</button>',
-        '          </div>',
-        '        </template>',
-        '        <template v-else-if="it.reserved===\'you\'">',
-        '          <button class="present__add present__add--ghost" @click="A.reserve(it,\'bought\')">Я купил это</button>',
-        '          <button class="present__add present__add--sm present__add--flat" @click="A.reserve(it,null)">Снять резерв</button>',
-        '        </template>',
-        '      </div>',
+        '      <template #media>'
+        + '<giver-actions :item="it" />'
+        + '<button class="present__dismiss" @click="A.removeFromShortlist(it)" title="Убрать из подборки">✕</button>'
+        + '</template>',
+        '      <template v-if="it.reserved===\'you\'">',
+        '        <button class="present__add present__add--ghost present__add--sm" @click="A.reserve(it,\'bought\')">Я купил это</button>',
+        '      </template>',
         '    </gift-card>',
         '  </div>',
         '</div>'
@@ -1129,19 +1208,10 @@
         '    <div class="tier__label"><tier-icon :tier="g.key" /> {{ g.label }} <span class="tier__count">{{ g.items.length }}</span></div>',
         '    <div class="grid grid--4">',
         '      <gift-card v-for="it in g.items" :key="it.id" :item="it">',
-        '        <template v-if="!it.reserved">',
-        '          <div class="actrow">',
-        '            <button class="present__add" @click="A.reserve(it,\'you\')">Зарезервировать</button>',
-        '            <button class="iconbtn" @click="A.startPool(it)" title="Скинуться вместе" aria-label="Скинуться вместе">' + POOL + '</button>',
-        '          </div>',
-        '        </template>',
-        '        <template v-else-if="it.reserved===\'you\'">',
-        '          <button class="present__add present__add--ghost" @click="A.reserve(it,\'bought\')">Я купил это</button>',
-        '          <button class="present__add present__add--sm present__add--flat" @click="A.reserve(it,null)">Снять резерв</button>',
-        '        </template>',
-        /* занято кем-то другим: действий нет — кроме открытого сбора, к нему можно присоединиться */
-        '        <template v-else-if="A.hasPool(it)">',
-        '          <button class="present__add present__add--ghost present__add--sm" @click="A.startPool(it)">Присоединиться к сбору</button>',
+        '        <template #media><giver-actions :item="it" /></template>',
+        /* «купил» — редкое действие и требует слов, поэтому осталось строкой */
+        '        <template v-if="it.reserved===\'you\'">',
+        '          <button class="present__add present__add--ghost present__add--sm" @click="A.reserve(it,\'bought\')">Я купил это</button>',
         '        </template>',
         '      </gift-card>',
         '    </div>',
@@ -1192,6 +1262,22 @@
         return { store: store, A: A, currentList: currentList, recipient: recipient, shortlist: shortlist };
       },
       template: [
+        '<div class="railcol">',
+        /* переход между идеями и списками — вместо верхних вкладок */
+        /* крупная карточка-переход вместо верхних вкладок */
+        '  <button class="navcard" :class="A.navCard().cls" @click="A.go(A.navCard().route)">',
+        '    <span class="navcard__art">',
+        '      <img class="navcard__art-main" :src="A.navCard().main" alt="">',
+        '      <img class="navcard__art-side" :src="A.navCard().side" alt="">',
+        '    </span>',
+        '    <span class="navcard__title" v-html="A.navCard().title"></span>',
+        '    <span class="navcard__cta">{{ A.navCard().cta }}',
+        '      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">',
+        '        <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h14m-5.5-6 6 6-6 6"/>',
+        '      </svg>',
+        '    </span>',
+        '  </button>',
+
         /* ── страница «Мои списки»: все списки вместо вкладок сверху ── */
         '<aside v-if="store.route===\'lists\'" class="wl-rail wl-rail--lists">',
         '  <div class="wl-rail__head">',
@@ -1279,7 +1365,8 @@
         '    </div>',
         '  </div>',
         '  <button class="wl-rail__open" @click="A.go(\'lists\')">Открыть список →</button>',
-        '</aside>'
+        '</aside>',
+        '</div>'
       ].join('')
     });
 

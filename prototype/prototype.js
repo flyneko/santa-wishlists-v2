@@ -12,7 +12,7 @@
     setup: function () {
       var store = WL.store, A = WL.A;
 
-      /* вкладки только на двух главных экранах, остальное — подстраницы */
+      /* правая панель — только на двух главных экранах, остальное подстраницы */
       var isMain = computed(function () { return store.route === 'ideas' || store.route === 'lists'; });
       var screenComp = computed(function () { return WL.screenByRoute[store.route]; });
       /* панель справа — и на идеях, и на списках (там в ней сами списки) */
@@ -52,16 +52,11 @@
       '  </aside>',
 
       '  <div class="ms-main">',
-      '    <header class="ms-topbar">',
-      '      <div v-if="isMain" class="ms-tabs">',
-      '        <button :class="{\'is-on\':store.route===\'ideas\'}" @click="A.go(\'ideas\')">Идеи</button>',
-      '        <button :class="{\'is-on\':store.route===\'lists\'}" @click="A.go(\'lists\')">Мои списки</button>',
-      '      </div>',
-      '      <template v-else-if="backTo">',
-      '        <button class="ms-back" @click="A.go(backTo.route)">{{ backTo.label }}</button>',
-      '        <span v-if="backTo.note" class="ms-crumb-note">{{ backTo.note }}</span>',
-      '      </template>',
-      '      <a class="ms-deck" href="../">← К презентации</a>',
+      /* шапка только на подстраницах: на главных ей нечего показывать,
+         а пустая она отъедала полосу сверху */
+      '    <header v-if="backTo" class="ms-topbar">',
+      '      <button class="ms-back" @click="A.go(backTo.route)">{{ backTo.label }}</button>',
+      '      <span v-if="backTo.note" class="ms-crumb-note">{{ backTo.note }}</span>',
       '    </header>',
 
       '    <div class="ms-body" :class="{\'ms-body--rail\':showRail}">',

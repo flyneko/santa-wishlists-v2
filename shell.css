@@ -74,36 +74,33 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 
 .ms-topbar{
   display:flex; align-items:center; gap:16px; flex-wrap:wrap;
-  padding:20px clamp(18px,3vw,40px) 0;
+  padding:18px clamp(18px,3vw,40px) 0;
 }
-/* ссылка на второй макет — чтобы обе страницы находились с GitHub Pages */
-.ms-deck{
-  margin-left:auto; font-size:13px; font-weight:600; color:var(--muted);
-  padding:6px 12px; border-radius:999px; border:1px solid var(--line);
-}
-.ms-deck:hover{ background:var(--field); color:var(--ink); }
-.ms-tabs{ display:flex; gap:4px; flex-wrap:wrap; }
-.ms-tabs button{
-  height:40px; padding:0 18px; border-radius:999px;
-  font-size:15px; font-weight:600; color:var(--muted); transition:background .15s,color .15s;
-}
-.ms-tabs button:hover{ color:var(--ink); background:var(--field); }
-.ms-tabs button.is-on{ background:var(--ink); color:#fff; }
 .ms-back{ font-weight:600; color:var(--green); font-size:14px; }
 .ms-back:hover{ text-decoration:underline; }
 .ms-crumb-note{ color:var(--muted); font-size:13px; }
 
 
-.ms-body{ flex:1; padding:20px clamp(18px,3vw,40px) 72px; }
+.ms-body{ flex:1; padding:34px clamp(18px,3vw,40px) 72px; }
 .ms-body--rail{ display:grid; grid-template-columns:minmax(0,1fr) 332px; gap:26px; align-items:start; }
 .ms-body--rail > div:first-child{ min-width:0; }
 
 /* ── правая панель «Вишлист» — как на сайте ── */
+/* правая колонка: кнопка сверху, панель под ней до низа окна */
+.railcol{
+  position:sticky; top:34px;
+  height:calc(100vh - 68px);
+  display:flex; flex-direction:column; gap:12px; min-width:0;
+}
+.railcol > .navcard{ flex:none; }
+/* панель одинакова на всех страницах: белая заливка и градиентная рамка
+   (тот же приём, что у карточки-перехода: два фона — padding-box и border-box) */
 .wl-rail{
-  position:sticky; top:20px;
-  /* до нижней кромки окна: 20px сверху + 20px воздуха снизу */
-  height:calc(100vh - 40px);
-  background:#EAF7F0; border:1px solid #CDE9DB; border-radius:20px; padding:16px;
+  flex:1; min-height:0;
+  border:2px solid transparent; border-radius:20px; padding:15px;
+  background:
+    linear-gradient(165deg,#FAFBF7 0%,#F7F9FB 52%,#F9F7FB 100%) padding-box,
+    linear-gradient(160deg,#DCE6CE 0%,#D3DEE4 52%,#DDD7E6 100%) border-box;
   display:flex; flex-direction:column; gap:12px; overflow:hidden;
 }
 .wl-rail__head{ display:flex; align-items:center; gap:8px; }
@@ -112,7 +109,7 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
   padding:6px 10px; border-radius:12px; font-size:17px; font-weight:800; color:var(--ink);
   transition:background .15s;
 }
-.wl-rail__switch:hover{ background:rgba(255,255,255,.7); }
+.wl-rail__switch:hover{ background:rgba(255,255,255,.85); }
 .wl-rail__emoji{ font-size:18px; flex:none; }
 .wl-rail__title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .wl-rail__switch b{
@@ -124,7 +121,6 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 .wl-rail__switch.is-static:hover{ background:transparent; }
 
 /* режим «Мои списки»: панель заменяет верхние вкладки */
-.wl-rail--lists{ background:#F5F5F7; border-color:#E4E4E8; }
 .wl-rail--lists .wl-rail__switch b{ background:var(--ink); }
 .wl-rail__row--list{ width:100%; text-align:left; transition:border-color .15s, background .15s; }
 .wl-rail__row--list:hover{ border-color:var(--muted-2); }
@@ -137,13 +133,11 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 .wl-rail__dot{ flex:none; color:var(--green); font-weight:800; }
 
 /* режим подборки для другого человека */
-.wl-rail--pick{ background:#F4F1FB; border-color:#DED6F3; }
 .wl-rail--pick .wl-rail__switch b{ background:#7B61FF; }
-.wl-rail--pick .wl-rail__row{ border-color:#E6E0F5; }
 .wl-rail--pick .wl-rail__mark{ color:#7B61FF; }
 .wl-rail__empty{
   font-size:13px; color:var(--muted); text-align:center; line-height:1.5;
-  border:1px dashed #DED6F3; border-radius:14px; padding:22px 14px; background:rgba(255,255,255,.5);
+  border:1px dashed var(--line); border-radius:14px; padding:22px 14px; background:rgba(255,255,255,.7);
 }
 .wl-rail__mark{ margin-left:8px; font-size:11px; font-weight:700; color:var(--muted-2); }
 .wl-rail__x{
@@ -172,7 +166,7 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 .wl-rail__thumb{ width:44px; height:44px; flex:none; border-radius:8px; }
 .wl-rail__row{
   display:flex; align-items:center; gap:9px;
-  background:#fff; border:1px solid #E4EFE8; border-radius:14px; padding:9px;
+  background:#fff; border:1px solid #EAECF0; border-radius:14px; padding:9px;
   transition:opacity .12s, box-shadow .12s, transform .12s;
 }
 /* перетаскивание порядка */
@@ -196,7 +190,7 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 
 @media (max-width:1240px){
   .ms-body--rail{ grid-template-columns:1fr; }
-  .wl-rail{ display:none; }
+  .railcol{ display:none; }
 }
 @media (max-width:960px){
   .ms-side{ display:none; }
@@ -215,9 +209,10 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
   display:grid; grid-template-columns:minmax(0,1fr) 332px; gap:26px; align-items:start;
 }
 .deck__stagebody--rail > .screen{ min-width:0; }
+.deck__stagebody--rail .railcol{ height:auto; max-height:calc(100vh - 68px); }
 @media (max-width:1100px){
   .deck__stagebody--rail{ grid-template-columns:minmax(0,1fr); }
-  .deck__stagebody--rail .wl-rail{ display:none; }
+  .deck__stagebody--rail .railcol{ display:none; }
 }
 .deck__switch{
   margin-left:auto; font-size:13px; font-weight:600; color:var(--green);
