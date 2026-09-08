@@ -135,9 +135,23 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 /* режим подборки для другого человека */
 .wl-rail--pick .wl-rail__switch b{ background:#7B61FF; }
 .wl-rail--pick .wl-rail__mark{ color:#7B61FF; }
+/* пусто — только текст по центру панели: ни рамки, ни подложки */
 .wl-rail__empty{
-  font-size:13px; color:var(--muted); text-align:center; line-height:1.5;
-  border:1px dashed var(--line); border-radius:14px; padding:22px 14px; background:rgba(255,255,255,.7);
+  flex:1; min-height:0; margin:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  padding:16px 4px 28px;
+  font-size:13px; line-height:1.7; color:var(--muted-2); text-align:center;
+}
+.wl-rail__empty-title{ font-size:16px; font-weight:700; color:var(--ink); letter-spacing:-.01em; }
+/* подсказка со встроенной мини-кнопкой — той же, что в углу карточки.
+   balance выравнивает строки, чтобы «на карточке» не уезжало одно вниз */
+.wl-rail__empty-hint{
+  display:inline; max-width:250px; text-wrap:balance;
+}
+.wl-rail__empty-hint .wantbtn--mini{
+  display:inline-flex; vertical-align:middle; margin:0 6px 0 3px;
+  position:static; width:21px; height:21px;
+  box-shadow:0 2px 6px rgba(0,0,0,.15); pointer-events:none;
 }
 .wl-rail__mark{ margin-left:8px; font-size:11px; font-weight:700; color:var(--muted-2); }
 .wl-rail__x{

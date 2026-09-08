@@ -219,6 +219,8 @@ a:hover{text-decoration:underline}
 }
 .cornerset .wantbtn{ position:static; }
 .wantbtn--sm{ width:34px; height:34px; box-shadow:0 2px 9px rgba(0,0,0,.18); }
+/* та же кнопка в тексте подсказки — уменьшенная и некликабельная */
+.wantbtn--mini{ width:26px; height:26px; }
 .wantbtn[disabled]{ opacity:.45; pointer-events:none; }
 
 /* «скинуться вместе» — вторичное, поэтому приглушённое до наведения.
@@ -385,6 +387,8 @@ a:hover{text-decoration:underline}
 
 /* ───────────────────────── search + filters ───────────────────────── */
 .searchbar{position:relative;margin-bottom:26px}
+/* когда под полем есть чипы — прижимаем их к нему, отступ уносим ниже */
+.searchbar.has-chips{margin-bottom:10px}
 .searchbar .field{width:100%;height:56px;font-size:16px;padding-right:106px;border-radius:14px}
 .field__go{
   position:absolute;right:7px;top:7px;width:42px;height:42px;border-radius:10px;
@@ -403,24 +407,28 @@ a:hover{text-decoration:underline}
   background:var(--green);color:#fff;font-size:10px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
 }
-.filters,.ideafilters{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:22px}
+.filters,.ideafilters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:26px}
+/* активный фильтр — нейтральный контур: это состояние, а не действие,
+   поэтому он не забирает себе ни зелёный, ни красный */
 .fchip{
-  height:40px;padding:0 15px;border-radius:var(--radius);
-  font-size:14px;font-weight:600;color:var(--ink);background:var(--field);border:0;
-  display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s;
+  display:inline-flex;align-items:center;gap:7px;
+  height:34px;padding:0 6px 0 13px;border-radius:999px;
+  font-size:13px;font-weight:600;color:var(--ink);
+  background:#fff;border:1.5px solid var(--line);
+  transition:border-color .15s,background .15s;
 }
-.fchip:hover{background:#e8e8ea}
-.fchip.is-on{background:rgba(247,79,79,.1);color:var(--red)}
-.fchip{display:inline-flex;align-items:center;gap:8px}
+.fchip:hover{border-color:var(--muted-2);background:#fcfcfd}
 .fchip__x{
-  width:18px;height:18px;border-radius:50%;background:rgba(247,79,79,.2);
-  font-size:9px;display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:50%;flex:none;
+  background:var(--field);color:var(--muted);
+  font-size:10px;display:inline-flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s;
 }
-.fchip.is-on:hover .fchip__x{background:var(--red);color:#fff}
+.fchip:hover .fchip__x{background:var(--ink);color:#fff}
 .fchip--add{background:#fff;border:1px dashed var(--line);color:var(--muted)}
 .fchip--add.is-on{background:var(--gold-soft);color:var(--gold);border-color:transparent}
-.flink{color:var(--red);font-weight:600;font-size:14px;margin-left:4px}
-.flink:hover{text-decoration:underline}
+.flink{color:var(--muted);font-weight:600;font-size:13px;margin-left:6px}
+.flink:hover{color:var(--ink);text-decoration:underline}
 
 /* ───────────────────────── segmented ───────────────────────── */
 .segbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -849,3 +857,5 @@ a:hover{text-decoration:underline}
 .navcard--ideas:hover{ box-shadow:0 9px 22px rgba(255,78,150,.3), inset 0 1px 0 rgba(255,255,255,.46); }
 .navcard--ideas .navcard__cta{ color:rgba(255,255,255,.94); }
 
+
+.nowrap{ white-space:nowrap; }

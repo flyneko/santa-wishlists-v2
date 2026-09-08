@@ -18,7 +18,7 @@
       /* панель справа — и на идеях, и на списках (там в ней сами списки) */
       var showRail = computed(function () { return isMain.value; });
       var backTo = computed(function () {
-        if (store.route === 'shared') return { route: 'lists', label: '← Мой вишлист', note: 'так список видит даритель' };
+        if (store.route === 'shared') return { route: 'lists', label: '← Мой вишлист', note: 'так вишлист видит даритель' };
         if (store.route === 'shortlist') return { route: 'ideas', label: '← Идеи подарков' };
         if (store.route === 'pool') return { route: store.poolBack, label: '← Назад' };
         return null;
