@@ -58,23 +58,36 @@
     return { id: id, title: title, emoji: emoji, date: date, cover: cover, items: items,
              grad: grad || COVERS[0].grad, bg: null };
   }
+  /* товары со скидкой: индекс в каталоге -> старая цена.
+     Скидка принадлежит товару, поэтому одинакова во всех подборках и списках. */
+  var SALE = {
+    3: 2790,    // лампа-колонка Right Meow
+    8: 3240,    // набор для коктейлей Pourpour
+    18: 1990,   // диск здоровья SpinTeam
+    26: 3490,   // увлажнитель PH11
+    34: 2990    // шоколадный фонтан
+  };
+  function was(i, oldPrice) { return oldPrice || SALE[i] || 0; }
+
   function gift(i, tier, note, oldPrice) {
     var g = good(i);
-    return { id: uid(), pid: g.id, name: g.name, price: g.price, oldPrice: oldPrice || 0,
+    return { id: uid(), pid: g.id, name: g.name, price: g.price, oldPrice: was(i, oldPrice),
              img: g.img, tier: tier || 'want', note: note || '', reserved: null };
   }
   function idea(i, reason, kind, oldPrice) {
     var g = good(i);
-    return { id: uid(), pid: g.id, name: g.name, price: g.price, oldPrice: oldPrice || 0,
+    return { id: uid(), pid: g.id, name: g.name, price: g.price, oldPrice: was(i, oldPrice),
              img: g.img, reason: reason, kind: kind || '', saved: false, gone: false };
   }
 
   function freshState() {
     var ideasOtherArr = [
-      idea(10, 'повод + интерес «дом»', ''),
-      idea(0, 'интерес «уход за собой»', ''),
+      idea(26, 'повод + интерес «дом»', ''),
+      idea(21, 'популярно у похожих людей', ''),
       idea(8, 'для встреч с друзьями', ''),
-      idea(14, 'беспроигрышный вариант', '')
+      idea(33, 'в вашем бюджете', ''),
+      idea(20, 'необычный вариант', ''),
+      idea(32, 'беспроигрышный вариант', '')
     ];
     var s = {
       route: 'ideas',
@@ -135,47 +148,64 @@
           gift(5, 'someday', '')
         ], COVERS[1].grad),
         seedList('l2', 'Новый год', '🎄', '31 декабря', good(7).img, [
-          gift(5, 'top', ''),
+          gift(31, 'top', ''),
           gift(2, 'top', ''),
           gift(14, 'top', ''),
           gift(16, 'top', ''),
           gift(7, 'top', ''),
+          gift(27, 'want', ''),
           gift(13, 'want', ''),
           gift(8, 'want', ''),
-          gift(6, 'want', ''),
+          gift(32, 'want', ''),
+          gift(5, 'someday', ''),
           gift(1, 'someday', '')
         ], COVERS[2].grad),
         seedList('l3', 'Коллегам', '💼', '', good(4).img, [
           gift(4, 'top', ''),
           gift(10, 'top', ''),
           gift(12, 'top', ''),
-          gift(15, 'top', ''),
+          gift(30, 'top', ''),
           gift(9, 'top', ''),
-          gift(0, 'want', ''),
-          gift(6, 'want', ''),
-          gift(13, 'want', ''),
-          gift(7, 'someday', '')
+          gift(17, 'want', ''),
+          gift(27, 'want', ''),
+          gift(35, 'want', ''),
+          gift(23, 'want', ''),
+          gift(15, 'someday', '')
         ], COVERS[3].grad)
       ],
 
       ideasSelf: [
-        idea(8, 'вы смотрели похожие наборы', '', 3240),
-        idea(6, 'вы смотрели товары для дома', ''),
-        idea(12, 'популярно у похожих людей', ''),
-        idea(9, 'в вашем бюджете', ''),
-        idea(13, 'к сезону · Новый год', ''),
-        idea(1, 'вам нравятся гаджеты', '')
+        idea(8, 'вы смотрели похожие наборы', ''),
+        idea(26, 'вы смотрели товары для дома', ''),
+        idea(21, 'популярно у похожих людей', ''),
+        idea(30, 'в вашем бюджете', ''),
+        idea(31, 'к сезону · Новый год', ''),
+        idea(18, 'вам нравятся гаджеты', ''),
+        idea(28, 'по вашим интересам', ''),
+        idea(33, 'часто берут к этому набору', '')
       ],
       ideasView: 'browse',        // browse (карусели) | filtered (список)
       activeFilter: null,         // { title, items } когда включён фильтр
       ideasOther: ideasOtherArr,
       collections: [
         { key: 'picked', title: 'Подобрано для подарка', items: ideasOtherArr },
-        { key: 'birthday', title: 'Для дня рождения', items: [3, 8, 2, 11, 1].map(function (i) { return idea(i, ''); }) },
-        { key: 'trending', title: 'Сегодня в тренде', items: [2, 3, 8, 13, 15].map(function (i) { return idea(i, ''); }) },
-        { key: 'under1000', title: 'До 1000 ₽', items: [0, 5, 10, 12, 7, 4].map(function (i) { return idea(i, ''); }) },
-        { key: 'wedding', title: 'Для свадьбы', items: [8, 3, 11, 6, 9].map(function (i) { return idea(i, ''); }) },
-        { key: 'home', title: 'Для дома и уюта', items: [2, 5, 11, 1, 6].map(function (i) { return idea(i, ''); }) }
+        { key: 'birthday', title: 'Для дня рождения',
+          items: [3, 8, 34, 29, 20, 25, 1, 18].map(function (i) { return idea(i, ''); }) },
+        { key: 'trending', title: 'Сегодня в тренде',
+          items: [21, 32, 28, 18, 26, 13, 24, 2].map(function (i) { return idea(i, ''); }) },
+        /* цену не выдумываем — берём из каталога всё, что укладывается в 1000 ₽ */
+        { key: 'under1000', title: 'До 1000 ₽',
+          items: GOODS.map(function (g, i) { return i; })
+            .filter(function (i) { return good(i).price <= 1000; })
+            .map(function (i) { return idea(i, ''); }) },
+        { key: 'party', title: 'Для вечеринки',
+          items: [29, 24, 21, 35, 8, 33].map(function (i) { return idea(i, ''); }) },
+        { key: 'newyear', title: 'К Новому году',
+          items: [31, 7, 16, 14, 27, 13, 2].map(function (i) { return idea(i, ''); }) },
+        { key: 'wedding', title: 'Для свадьбы',
+          items: [8, 22, 34, 33, 25, 11, 9].map(function (i) { return idea(i, ''); }) },
+        { key: 'home', title: 'Для дома и уюта',
+          items: [2, 5, 11, 22, 19, 26, 1, 6].map(function (i) { return idea(i, ''); }) }
       ],
 
       selfFilters: [
