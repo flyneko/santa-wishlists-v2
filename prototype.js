@@ -6,7 +6,7 @@
   'use strict';
   var V = window.Vue, WL = window.WL;
   var computed = V.computed;
-  var IC = '../icons/';
+  var IC = 'icons/';
 
   var app = V.createApp({
     setup: function () {

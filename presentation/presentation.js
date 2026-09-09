@@ -342,7 +342,7 @@
       '      <svg v-else viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>',
       '      {{ demo.on ? "Пауза" : "Показать" }}',
       '    </button>',
-      '    <a class="deck__switch" href="prototype/">Открыть прототип →</a>',
+      '    <a class="deck__switch" href="../">Открыть прототип →</a>',
       '    <div class="stepper">',
       '      <button class="stepper__btn" @click="goStory(deck.i-1)" aria-label="Назад">',
       '        <svg viewBox="0 0 24 24" width="17" height="17"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m14.5 5.5-7 6.5 7 6.5"/></svg>',

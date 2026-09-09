@@ -8,7 +8,7 @@
   var GOODS = window.WL_GOODS || [];
   function good(i) { return GOODS[i] || GOODS[0] || { name: '', price: 0, img: '' }; }
 
-  /* презентация лежит в корне, прототип — в подпапке: путь к картинкам берём
+  /* прототип лежит в корне, презентация — в подпапке: путь к картинкам берём
      от самого app-core.js, чтобы обе оболочки грузили одни и те же файлы */
   var BASE = (function () {
     if (typeof document === 'undefined') return '';
