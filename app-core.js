@@ -1041,6 +1041,13 @@
           /* к чужому открытому сбору присоединиться можно, к чужому резерву — нет */
           return this.pooled;
         },
+        /* свой резерв держится не подписью, а следующим шагом: «я купил это» */
+        buyMode: function () {
+          if (this.bought) return false;
+          if (this.pooled) return false;   /* в общем сборе покупает организатор, статус другой */
+          return this.mine;
+        },
+        showPill: function () { return !!this.item.reserved && !this.buyMode; },
         reserveLabel: function () { return this.mine ? 'Вы дарите — снять резерв' : 'Зарезервировать'; },
         poolLabel: function () {
           if (!this.pooled) return 'Скинуться вместе';
@@ -1065,7 +1072,23 @@
         '      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M16.3 14.6c2.3.2 4.1 1.7 4.1 3.8"/>',
         '    </svg>',
         '  </button>',
-        '  <taken-pill v-if="item.reserved" :item="item" />',
+        /* резерв за вами: маленький крестик снимает его, крупная кнопка ведёт дальше */
+        '  <button v-if="buyMode" class="wantbtn wantbtn--sm wantbtn--cancel" @click="A.reserve(item,null)"',
+        '          title="Снять резерв" aria-label="Снять резерв">',
+        '    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">',
+        '      <path fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" d="M7 7l10 10M17 7L7 17"/>',
+        '    </svg>',
+        '  </button>',
+        '  <button v-if="buyMode" class="wantbtn wantbtn--label wantbtn--buy" @click="A.reserve(item,\'bought\')"',
+        '          title="Отметить купленным" aria-label="Отметить купленным">',
+        '    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">',
+        '      <path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="M6.6 3h10.8l2.6 3.6v12.6a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 19.2V6.6Z"/>',
+        '      <path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" d="M4 6.6h16"/>',
+        '      <path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" d="M15.6 10.2a3.6 3.6 0 0 1-7.2 0"/>',
+        '    </svg>',
+        '    Я купил это',
+        '  </button>',
+        '  <taken-pill v-if="showPill" :item="item" />',
         '  <button v-if="showHold" class="wantbtn wantbtn--hold" :class="{\'is-on\':mine}" @click="toggle()"',
         '          :title="reserveLabel" :aria-label="reserveLabel" :disabled="A.otherHolds(item)">',
         '    <svg v-if="mine" viewBox="0 0 24 24" width="21" height="21" aria-hidden="true">',
@@ -1537,9 +1560,6 @@
         + '<button class="present__dismiss" @click="A.removeFromShortlist(it)" title="Убрать из подборки">✕</button>'
         + '<giver-actions :item="it" />'
         + '</template>',
-        '      <template v-if="it.reserved===\'you\'">',
-        '        <button class="present__add present__add--ghost present__add--sm" @click="A.reserve(it,\'bought\')">Я купил это</button>',
-        '      </template>',
         '    </gift-card>',
         '  </div>',
         '</div>'
@@ -1634,10 +1654,6 @@
         '    <div class="grid grid--4">',
         '      <gift-card v-for="it in g.items" :key="it.id" :item="it">',
         '        <template #media><giver-actions :item="it" /></template>',
-        /* «купил» — редкое действие и требует слов, поэтому осталось строкой */
-        '        <template v-if="it.reserved===\'you\'">',
-        '          <button class="present__add present__add--ghost present__add--sm" @click="A.reserve(it,\'bought\')">Я купил это</button>',
-        '        </template>',
         '      </gift-card>',
         '    </div>',
         '  </div>',
