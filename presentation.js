@@ -95,8 +95,18 @@
         title: 'Я складываю кандидатов в подборку — человек её не видит',
         sub: 'Здесь можно сравнить варианты и довести один до конца: зарезервировать или собрать на него деньги.',
         act: [
-          { label: 'Зарезервировать', run: function () { var it = st.shortlists[st.recipientId][0]; if (it) A.reserve(it, 'you'); A.spotlight('screen'); } },
-          { label: 'Снять резерв', run: function () { var it = st.shortlists[st.recipientId][0]; if (it) A.reserve(it, null); A.spotlight('screen'); } }
+          { label: 'Добавить кандидата', run: function () {
+              var cols = st.recipientCols[st.recipientId] || st.collections;
+              var pool = cols[cols.length - 1].items;
+              var it = pool.filter(function (x) { return !A.inShortlist(x); })[0];
+              if (it) A.addToShortlist(it);
+              A.spotlight('screen');
+            } },
+          { label: 'Убрать первого', run: function () {
+              var it = st.shortlists[st.recipientId][0];
+              if (it) A.removeFromShortlist(it);
+              A.spotlight('screen');
+            } }
         ] },
       { route: 'shared', pre: base, nav: 'Резерв подарка',
         title: 'Я резервирую подарок, чтобы никто не купил его дважды',

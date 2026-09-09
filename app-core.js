@@ -34,6 +34,24 @@
     { key: 'творчество', emoji: '🎨' }, { key: 'питомцы', emoji: '🐾' }
   ];
   var LIST_EMOJI = ['🎁', '🎂', '🎄', '💼', '💍', '🏠', '🎓', '👶', '✈️', '🎃', '❤️', '🍀'];
+  /* какие категории каталога отвечают каждому интересу из анкеты */
+  var INTEREST_CATS = {
+    'дом':          ['Интерьер', 'Светильники', 'Техника для дома'],
+    'техника':      ['Техника для дома', 'Колонки'],
+    'бар':          ['Бар', 'Алкоигры'],
+    'игры':         ['Настольные игры', 'Игрушки', 'Алкоигры'],
+    'спорт':        ['Подарочные наборы'],
+    'книги':        ['Постеры', 'Календари'],
+    'кухня':        ['Кухня', 'Наборы для специй', 'Ланч-боксы', 'Шоколадные фонтаны'],
+    'уход':         ['Уход за собой', 'Маски для сна'],
+    'кофе':         ['Кухня', 'Бар'],
+    'растения':     ['Интерьер'],
+    'музыка':       ['Колонки'],
+    'путешествия':  ['Ланч-боксы', 'Сумки, кошельки, косметички'],
+    'творчество':   ['Наборы для творчества', 'Ручки', 'Стикеры', 'Постеры'],
+    'питомцы':      ['Игрушки', 'Интерьер']
+  };
+
   var AVA_COLORS = ['#7B61FF', '#2D9CDB', '#EB5757', '#F2994A', '#00A99D', '#BB6BD9', '#E4A11B'];
   /* берём первый свободный цвет — иначе новый человек дублирует аватар Ани */
   function freeColor(taken) {
@@ -102,16 +120,20 @@
       poolBack: 'shared',
 
       /* получатель подарка в режиме «Для другого» */
+      /* source: 'game' — подопечный из игры «Мой Санта», их анкету не меняем;
+         'own' — человек, которого добавили здесь сами */
       recipients: [
-        { id: 'r1', name: 'Аня', short: 'Ани', hasWishlist: true,
-          color: '#7B61FF', gender: 'f', age: 1, interests: ['дом', 'уход'] },
-        { id: 'r2', name: 'Игорь', short: 'Игоря', hasWishlist: false,
-          color: '#2D9CDB', gender: 'm', age: 2, interests: ['техника', 'игры'] },
-        { id: 'r3', name: 'Коллега', short: 'коллеги', hasWishlist: false,
+        { id: 'r1', name: 'Аня', short: 'Ани', hasWishlist: true, source: 'game', game: 'Офис · Новый год 2025',
+          color: '#7B61FF', gender: 'f', age: 1, interests: ['дом', 'уход'],
+          wishlist: [0, 11, 2, 30, 22, 27] },
+        { id: 'r2', name: 'Игорь', short: 'Игоря', hasWishlist: true, source: 'game', game: 'Семья · Дни рождения',
+          color: '#2D9CDB', gender: 'm', age: 2, interests: ['техника', 'игры'],
+          wishlist: [33, 29, 24, 1, 18] },
+        { id: 'r3', name: 'Коллега', short: 'коллеги', hasWishlist: false, source: 'own', game: '',
           color: '#EB5757', gender: 'x', age: 1, interests: ['кофе', 'книги'] }
       ],
-      /* черновик анкеты нового человека (модалка) */
-      newPerson: { name: '', gender: 'f', age: 1, interests: [] },
+      /* черновик анкеты (модалка). id !== null — правим существующего */
+      newPerson: { id: null, name: '', gender: 'f', age: 1, interests: [] },
       recipientId: 'r1',
       shortlists: { r1: [], r2: [], r3: [] },
 
@@ -228,6 +250,7 @@
       ],
       interests: INTERESTS.map(function (t) { return { key: t.key, emoji: t.emoji, on: false }; }),
 
+      recipientCols: {},          // подборки, собранные под конкретного человека
       poolItemId: null            // товар, который открыт на экране сбора
     };
     s.lists[0].items[2].reserved = 'someone';
@@ -614,6 +637,15 @@
     clearIdeasFilter: function () { store.ideasView = 'browse'; store.activeFilter = null; },
 
     /* ── бесконечная лента: подгружаем порциями, пока не упрёмся в предел ── */
+    /* подопечный из игры — под него собраны свои блоки */
+    isGameTarget: function () {
+      if (store.ideasFor !== 'other') return false;
+      var r = store.recipients.find(function (x) { return x.id === store.recipientId; });
+      return r ? r.source === 'game' : false;
+    },
+    feedTitle: function () {
+      return A.isGameTarget() ? 'Все подряд' : 'Бесконечная лента подарков';
+    },
     feedMore: function () {
       if (store.feedLoading) return;
       if (store.feedDone) return;
@@ -652,17 +684,66 @@
       if (id === 'self') { store.ideasFor = 'self'; }
       else {
         store.ideasFor = 'other'; store.recipientId = id;
-        A.applyProfile(store.recipients.find(function (r) { return r.id === id; }));
+        var r = store.recipients.find(function (x) { return x.id === id; });
+        A.applyProfile(r);
+        A.buildRecipientCols(r);
       }
       store.ideasView = 'browse'; store.activeFilter = null; store.openMenu = null;
+    },
+
+    /* ── подборки под конкретного человека ──
+       Собираем один раз и кладём в кэш: если пересобирать на каждый рендер,
+       у карточек менялись бы id и слетали бы отметки «в подборке». */
+    buildRecipientCols: function (r) {
+      if (!r) return;
+      /* свои люди получают обычные подборки каталога — их анкета уже настроила фильтры */
+      if (r.source !== 'game') return;
+      if (store.recipientCols[r.id]) return;
+      var cols = [];
+      if (r.hasWishlist) {
+        cols.push({ key: 'their', title: 'Из вишлиста ' + r.short,
+                    items: (r.wishlist || []).map(function (i) { return idea(i, 'человек попросил сам'); }) });
+      }
+      var picked = A.interestGoods(r);
+      if (picked.length) {
+        cols.push({ key: 'interests', title: 'На основании интересов ' + r.short,
+                    items: picked.map(function (i) { return idea(i, ''); }) });
+      }
+      var trending = store.collections.find(function (c) { return c.key === 'trending'; });
+      cols.push({ key: 'trending', title: 'В тренде', items: trending ? trending.items : [] });
+      store.recipientCols[r.id] = cols;
+    },
+    /* индексы товаров, попадающих в интересы человека */
+    interestGoods: function (r) {
+      var cats = {};
+      (r.interests || []).forEach(function (k) {
+        (INTEREST_CATS[k] || []).forEach(function (c) { cats[c] = 1; });
+      });
+      var out = [];
+      GOODS.forEach(function (g, i) { if (cats[g.cat]) out.push(i); });
+      return out.slice(0, 10);
     },
     /* ── анкета нового человека (модалка) ── */
     ages: AGES,
     genders: GENDERS,
     openPersonSheet: function () {
-      store.newPerson = { name: '', gender: 'f', age: 1, interests: [] };
+      store.newPerson = { id: null, name: '', gender: 'f', age: 1, interests: [] };
       store.openMenu = null;
       store.sheet = 'person';
+    },
+    editPerson: function (r) {
+      store.newPerson = { id: r.id, name: r.name, gender: r.gender, age: r.age,
+                          interests: (r.interests || []).slice() };
+      store.openMenu = null;
+      store.sheet = 'person';
+    },
+    editingPerson: function () { return !!store.newPerson.id; },
+    /* подопечные из игр и добавленные вручную показываем отдельными списками */
+    gameRecipients: function () {
+      return store.recipients.filter(function (r) { return r.source === 'game'; });
+    },
+    ownRecipients: function () {
+      return store.recipients.filter(function (r) { return r.source !== 'game'; });
     },
     setPersonGender: function (g) { store.newPerson.gender = g; },
     setPersonAge: function (i) { store.newPerson.age = i; },
@@ -677,9 +758,21 @@
       var p = store.newPerson;
       var name = (p.name || '').trim();
       if (!name) { toast('Введите имя'); return; }
+      if (p.id) {
+        var r = store.recipients.find(function (x) { return x.id === p.id; });
+        if (r) {
+          r.name = name; r.short = name;
+          r.gender = p.gender; r.age = p.age; r.interests = p.interests.slice();
+        }
+        store.sheet = null;
+        A.setIdeasTarget(p.id);
+        toast('Анкета обновлена');
+        return;
+      }
       var id = uid();
       store.recipients.push({
-        id: id, name: name, short: name, hasWishlist: false, color: freeColor(store.recipients),
+        id: id, name: name, short: name, hasWishlist: false, source: 'own', game: '',
+        color: freeColor(store.recipients),
         gender: p.gender, age: p.age, interests: p.interests.slice()
       });
       store.shortlists[id] = [];
@@ -875,7 +968,7 @@
       beforeUnmount: function () { if (this.io) this.io.disconnect(); },
       template: [
         '<section class="feed">',
-        '  <div class="feed__head"><span class="section-title">Бесконечная лента подарков</span></div>',
+        '  <div class="feed__head"><span class="section-title">{{ A.feedTitle() }}</span></div>',
         '  <div class="grid grid--4">',
         '    <gift-card v-for="it in A.live(store.feed)" :key="it.id" :item="it">',
         '      <template #media>'
@@ -1130,7 +1223,9 @@
         /* обе ветки («себе» и «другому») рисуются одной разметкой:
            меняются только подборки и действие на карточке */
         var cols = computed(function () {
-          if (store.ideasFor === 'other') return store.collections;
+          if (store.ideasFor === 'other') {
+            return store.recipientCols[store.recipientId] || store.collections;
+          }
           var rest = store.collections.filter(function (c) { return c.key !== 'picked'; });
           return [{ key: 'self', title: 'Подобрано для вас', items: store.ideasSelf }].concat(rest);
         });
@@ -1154,18 +1249,15 @@
         '          </button>',
         '          <div v-if="store.openMenu===\'who\'" class="dd__panel dd__panel--left" @click.stop>',
         '            <div class="dd__title">Кому подбираем</div>',
-        '            <button class="dd__item" :class="{\'is-on\':isSelf}" @click="A.setIdeasTarget(\'self\')">',
-        '              <span class="who__ava who__ava--me">Я</span>',
-        '              <span class="dd__who">Себе</span>',
-        '              <span v-if="isSelf" class="dd__check">✓</span>',
-        '            </button>',
-        '            <div class="dd__sep"></div>',
-        '            <button v-for="r in store.recipients" :key="r.id" class="dd__item" :class="{\'is-on\':A.isTarget(r)}" @click="A.setIdeasTarget(r.id)">',
-        '              <span class="who__ava" :style="{background:r.color}">{{ r.name.charAt(0) }}</span>',
-        '              <span class="dd__who">{{ r.name }}</span>',
-        '              <span v-if="A.shortlistCount(r)" class="dd__n">{{ A.shortlistCount(r) }}</span>',
-        '              <span v-if="A.isTarget(r)" class="dd__check">✓</span>',
-        '            </button>',
+        '            <person-row who="self" />',
+        '            <template v-if="A.gameRecipients().length">',
+        '              <div class="dd__title dd__title--sub">Из игр «Мой Санта»</div>',
+        '              <person-row v-for="r in A.gameRecipients()" :key="r.id" :person="r" />',
+        '            </template>',
+        '            <template v-if="A.ownRecipients().length">',
+        '              <div class="dd__title dd__title--sub">Мои люди</div>',
+        '              <person-row v-for="r in A.ownRecipients()" :key="r.id" :person="r" />',
+        '            </template>',
         '            <button class="dd__item dd__item--add" @click="A.openPersonSheet()">＋ Новый человек</button>',
         '          </div>',
         '        </span>',
@@ -1248,13 +1340,34 @@
     /* ── Экран: подборка для конкретного человека ── */
     app.component('ShortlistScreen', {
       setup: function () { return { store: store, A: A, recipient: recipient, shortlist: shortlist }; },
+      computed: { game: function () { return A.isGameTarget(); } },
       template: [
         '<div>',
         '  <div class="ideas-head">',
-        '    <h1 class="ideas-title">Подборка для {{ recipient.short }}</h1>',
-        '    <button class="flink" @click="A.go(\'ideas\')">← Вернуться к идеям</button>',
+        '    <div class="ideas-head__left">',
+        '      <h1 class="ideas-title">Подборка для {{ recipient.short }}</h1>',
+        '    </div>',
+        '    <div class="ideas-head__right">',
+        /* тайному санте делиться не с кем — дарит он один */
+        '      <button v-if="!game" class="btn btn--outline btn--sm" @click="A.openSheet(\'pickshare\')">',
+        '        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"',
+        '             stroke-linecap="round" stroke-linejoin="round" style="margin-right:7px">',
+        '          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>',
+        '          <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
+        '        </svg>Поделиться подборкой</button>',
+        '      <button class="flink" @click="A.go(\'ideas\')">← Вернуться к идеям</button>',
+        '    </div>',
         '  </div>',
-        '  <p class="shortlist-hint">Личный список кандидатов — {{ recipient.name }} его не видит. Выберите победителя и зарезервируйте, чтобы никто не купил то же самое.</p>',
+
+        /* в игре дарит один человек: ни резерва, ни сбора здесь не нужно */
+        '  <p v-if="game" class="shortlist-hint">',
+        '    Вы тайный Санта для {{ recipient.short }} — дарите только вы, поэтому резервировать подарок не нужно.',
+        '    {{ recipient.name }} подборку не видит.',
+        '  </p>',
+        '  <p v-else class="shortlist-hint">',
+        '    Личный список кандидатов — {{ recipient.name }} его не видит.',
+        '    Поделитесь подборкой с теми, кто дарит вместе с вами.',
+        '  </p>',
 
         '  <div v-if="recipient.hasWishlist" class="shortlist-note">',
         '    <span>У {{ recipient.short }} есть свой вишлист — проверьте, что человек просил сам.</span>',
@@ -1267,12 +1380,8 @@
         '  <div v-else class="grid grid--4" style="margin-top:20px">',
         '    <gift-card v-for="it in shortlist" :key="it.id" :item="it">',
         '      <template #media>'
-        + '<giver-actions :item="it" />'
         + '<button class="present__dismiss" @click="A.removeFromShortlist(it)" title="Убрать из подборки">✕</button>'
         + '</template>',
-        '      <template v-if="it.reserved===\'you\'">',
-        '        <button class="present__add present__add--ghost present__add--sm" @click="A.reserve(it,\'bought\')">Я купил это</button>',
-        '      </template>',
         '    </gift-card>',
         '  </div>',
         '</div>'
@@ -1412,6 +1521,49 @@
     });
 
     /* ── правая панель «Вишлист» (как на экране MySanta) ── */
+    /* ── строка человека в списке «кому подбираем» ── */
+    app.component('PersonRow', {
+      props: ['person', 'who'],
+      setup: function () { return { store: store, A: A }; },
+      computed: {
+        self: function () { return this.who === 'self'; },
+        on: function () { return this.self ? store.ideasFor === 'self' : A.isTarget(this.person); },
+        editable: function () { return this.self ? false : this.person.source !== 'game'; },
+        sub: function () {
+          if (this.self) return 'мой вишлист';
+          if (this.person.game) return this.person.game;
+          var n = A.shortlistCount(this.person);
+          return n ? n + ' в подборке' : 'добавлен вручную';
+        }
+      },
+      methods: {
+        pick: function () { A.setIdeasTarget(this.self ? 'self' : this.person.id); }
+      },
+      template: [
+        '<div class="dd__person" :class="{\'is-on\':on}" role="button" tabindex="0"',
+        '     @click="pick()" @keyup.enter="pick()">',
+        '  <span v-if="self" class="who__ava who__ava--me">Я</span>',
+        '  <span v-else class="who__ava" :style="{background:person.color}">{{ person.name.charAt(0) }}</span>',
+        '  <span class="dd__who">',
+        '    <b>{{ self ? "Себе" : person.name }}</b>',
+        '    <em>{{ sub }}</em>',
+        '  </span>',
+        /* анкету можно править только у своих людей — из игры она приходит готовой */
+        '  <button v-if="editable" class="dd__cog" @click.stop="A.editPerson(person)" title="Изменить анкету" aria-label="Изменить анкету">',
+        /* шестерёнка — Feather Icons «settings» (MIT), а не рисованная от руки */
+        '    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"'
+        + ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        + '<circle cx="12" cy="12" r="3"/>'
+        + '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
+        + '</svg>',
+        '  </button>',
+        '  ' + '<span class="wl-rail__check" :class="{\'is-on\':on}" aria-hidden="true">'
+        + '<svg viewBox="0 0 24 24" width="13" height="13"><path fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" d="m5.5 12.4 4.2 4.2 8.8-9.2"/></svg>'
+        + '</span>',
+        '</div>'
+      ].join('')
+    });
+
     /* ── строка вишлиста: одна и та же в панели и в выпадающем списке ── */
     app.component('WishlistRow', {
       props: ['list'],
@@ -1652,6 +1804,21 @@
       ].join('')
     });
 
+    /* ── модалка: поделиться подборкой для человека ── */
+    app.component('SheetPickShare', {
+      setup: function () { return { store: store, A: A, recipient: recipient, shortlist: shortlist }; },
+      template: [
+        '<div>',
+        '  <div class="sheet__title">Поделиться подборкой <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
+        '  <p class="sheet__hint">Ссылка для тех, кто дарит {{ recipient.short }} вместе с вами: видно {{ shortlist.length }} идей. Сам {{ recipient.name }} по ней ничего не увидит.</p>',
+        '  <div class="sheet__row">',
+        '    <div class="copyfield">mysanta.ru/pick/{{ recipient.id }}</div>',
+        '    <button class="btn btn--green btn--sm btn--block" @click="A.copyLink()">Копировать ссылку</button>',
+        '  </div>',
+        '</div>'
+      ].join('')
+    });
+
     app.component('SheetCover', {
       setup: function () { return { store: store, A: A, currentList: currentList }; },
       template: [
@@ -1726,7 +1893,8 @@
       setup: function () { return { store: store, A: A, p: computed(function () { return store.newPerson; }) }; },
       template: [
         '<div>',
-        '  <div class="sheet__title">Для кого подбираем <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
+        '  <div class="sheet__title">{{ A.editingPerson() ? "Анкета человека" : "Для кого подбираем" }}',
+        '    <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
         '  <p class="sheet__hint">Чем точнее анкета, тем ближе подборка. Человек её не видит.</p>',
 
         '  <div class="sheet__row">',
@@ -1762,7 +1930,7 @@
 
         '  <div class="sheet__foot">',
         '    <button class="btn btn--ghost" @click="A.closeSheet()">Отмена</button>',
-        '    <button class="btn btn--green" :class="{\'is-off\':!A.canCreatePerson()}" @click="A.createPerson()">Подобрать подарок</button>',
+        '    <button class="btn btn--green" :class="{\'is-off\':!A.canCreatePerson()}" @click="A.createPerson()">{{ A.editingPerson() ? "Сохранить" : "Подобрать подарок" }}</button>',
         '  </div>',
         '</div>'
       ].join('')
@@ -1778,6 +1946,7 @@
         '        <div class="sheet__grip"></div>',
         '        <sheet-edit v-if="store.sheet===\'edit\'" />',
         '        <sheet-share v-else-if="store.sheet===\'share\'" />',
+        '        <sheet-pick-share v-else-if="store.sheet===\'pickshare\'" />',
         '        <sheet-person v-else-if="store.sheet===\'person\'" />',
         '        <sheet-filters v-else-if="store.sheet===\'filters\'" />',
         '        <sheet-cover v-else-if="store.sheet===\'cover\'" />',
