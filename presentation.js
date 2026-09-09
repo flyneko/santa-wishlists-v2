@@ -110,15 +110,15 @@
           st.route = 'shortlist';
         },
         title: 'Складываю кандидатов и выбираю одного',
-        sub: 'Подборку видит только Санта. Резервировать нечего: в игре подарок дарит один человек — вы.',
+        sub: 'Подборку видит только Санта. Кандидата можно занять за собой или позвать других скинуться.',
         steps: [
           { hint: 'Подборка видна только вам: человек в неё не заглянет',
-            at: function () { return el('.shortlist-hint'); } },
+            at: function () { return el('.hero__note'); } },
           { hint: 'Крестик убирает кандидата из подборки',
             at: function () { return nth('.grid .present__dismiss'); },
             run: function () { var it = st.shortlists[st.recipientId][0]; if (it) A.removeFromShortlist(it); } },
-          { hint: 'Отсюда можно свериться с его собственным вишлистом',
-            at: function () { return el('.shortlist-note .btn'); } }
+          { hint: 'Подборкой можно поделиться — например, чтобы посоветоваться',
+            at: function () { return el('.hero__acts .hact--primary'); } }
         ] }
     ] },
 

@@ -115,6 +115,13 @@ a:hover{text-decoration:underline}
 }
 @media (max-width:880px){ .hero__fan{ display:none; } }
 .hero__body{ position:relative; z-index:2; padding:26px 28px 28px; width:100%; color:#fff; }
+/* в подборке место значка списка занимает аватарка человека */
+.hero__ava{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:46px; height:46px; border-radius:50%; margin-bottom:10px;
+  color:#fff; font-size:19px; font-weight:800;
+  box-shadow:0 2px 10px rgba(0,0,0,.18), 0 0 0 3px rgba(255,255,255,.5);
+}
 .hero__emoji{
   display:inline-flex; align-items:center; justify-content:center;
   width:46px; height:46px; border-radius:50%; font-size:24px; margin-bottom:10px;
@@ -1007,6 +1014,12 @@ a:hover{text-decoration:underline}
 /* ── описание в шапке: две строки, остальное по «Показать» ── */
 .hero__desc{
   position:relative; z-index:2; max-width:62%; margin:18px 0 0;
+}
+/* пояснение к подборке — на месте описания вишлиста, но без сворачивания */
+.hero__note{
+  position:relative; z-index:2; max-width:62%; margin:18px 0 0;
+  font-size:13px; line-height:1.45; color:rgba(255,255,255,.86);
+  text-shadow:0 1px 8px rgba(0,0,0,.35);
 }
 /* «Показать» и стоп-лист — строкой под текстом */
 .hero__desc-links{ display:flex; align-items:center; gap:12px; margin-top:6px; }

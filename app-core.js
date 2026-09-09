@@ -425,6 +425,13 @@
     toastT = setTimeout(function () { store.toastMsg = ''; }, 1900);
   }
 
+  /* осветляем hex, чтобы из одного цвета получить градиент шапки */
+  function lighten(hex, k) {
+    var n = parseInt(String(hex || '#7B61FF').slice(1), 16);
+    var up = function (v) { return Math.round(v + (255 - v) * k); };
+    return '#' + ((1 << 24) + (up(n >> 16) << 16) + (up((n >> 8) & 255) << 8) + up(n & 255)).toString(16).slice(1);
+  }
+
   var A = {
     money: money,
     toast: toast,
@@ -624,6 +631,18 @@
     heroFan: function (l) {
       if (!l || !l.items) return [];
       return l.items.slice(0, 4);
+    },
+    /* у подборки нет обложки — красим шапку в цвет аватарки человека */
+    heroTint: function (color) {
+      return { backgroundImage: 'linear-gradient(135deg,' + (color || '#7B61FF') + ' 0%,' + lighten(color, .4) + ' 100%)' };
+    },
+    shortFan: function () { return shortlist.value.slice(0, 4); },
+    plural: function (n, forms) {
+      var a = Math.abs(n) % 100, b = a % 10;
+      if (a > 10 && a < 20) return forms[2];
+      if (b > 1 && b < 5) return forms[1];
+      if (b === 1) return forms[0];
+      return forms[2];
     },
     heroStyle: function (l) {
       if (!l) return {};
@@ -1463,48 +1482,64 @@
     /* ── Экран: подборка для конкретного человека ── */
     app.component('ShortlistScreen', {
       setup: function () { return { store: store, A: A, recipient: recipient, shortlist: shortlist }; },
-      computed: { game: function () { return A.isGameTarget(); } },
+      computed: {
+        game: function () { return A.isGameTarget(); },
+        /* в игре дарит один человек: ни резерва, ни сбора здесь не нужно */
+        note: function () {
+          return this.game
+            ? 'Вы тайный Санта для ' + recipient.value.short + ' — подборку ' + recipient.value.name + ' не видит. '
+              + 'Кандидата можно зарезервировать или позвать других скинуться.'
+            : 'Личный список кандидатов. Поделитесь им с теми, кто дарит вместе с вами: '
+              + 'подарок можно занять за собой или собрать на него вместе.';
+        },
+        countLabel: function () {
+          return shortlist.value.length + ' ' + A.plural(shortlist.value.length, ['идея', 'идеи', 'идей']);
+        }
+      },
       template: [
         '<div>',
-        '  <div class="ideas-head">',
-        '    <div class="ideas-head__left">',
-        '      <h1 class="ideas-title">Подборка для {{ recipient.short }}</h1>',
+        /* шапка как у вишлиста: тот же веер, аватарка вместо значка списка */
+        '  <header class="hero" :style="A.heroTint(recipient.color)">',
+        '    <div class="hero__scrim"></div>',
+        '    <div class="hero__fan" aria-hidden="true">',
+        '      <span v-for="(it,n) in A.shortFan()" :key="it.id" class="hero__fancard" :class="\'i\'+n">',
+        '        <thumb :image="it.img" cls="" />',
+        '      </span>',
+        '      <span v-if="!A.shortFan().length" class="hero__fanempty">',
+        '        <ui-icon name="gift" :size="38" />',
+        '      </span>',
         '    </div>',
-        '    <div class="ideas-head__right">',
-        /* тайному санте делиться не с кем — дарит он один */
-        '      <button v-if="!game" class="btn btn--outline btn--sm" @click="A.openSheet(\'pickshare\')">',
-        '        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"',
-        '             stroke-linecap="round" stroke-linejoin="round" style="margin-right:7px">',
-        '          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>',
-        '          <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
-        '        </svg>Поделиться подборкой</button>',
-        '      <button class="flink" @click="A.go(\'ideas\')"><ui-icon name="chevron-left" :size="15" /> Вернуться к идеям</button>',
+        '    <div class="hero__body">',
+        '      <span class="hero__ava" :style="{background:recipient.color}">{{ recipient.name.charAt(0) }}</span>',
+        '      <div class="hero__head">',
+        '        <h1 class="hero__title">Подборка для {{ recipient.short }}</h1>',
+        '        <span v-if="recipient.game" class="hero__date"><ui-icon name="users" :size="15" /> {{ recipient.game }}</span>',
+        '      </div>',
+        '      <div class="hero__meta">',
+        '        <span><ui-icon name="gift" /> {{ countLabel }}</span>',
+        '        <span><ui-icon name="lock" /> {{ recipient.name }} не видит</span>',
+        '      </div>',
+        '      <p class="hero__note">{{ note }}</p>',
+        '      <div class="hero__acts">',
+        '        <button class="hact hact--primary" @click="A.openSheet(\'pickshare\')">',
+        '          <ui-icon name="share-2" :size="18" /> Поделиться подборкой</button>',
+        '      </div>',
         '    </div>',
-        '  </div>',
-
-        /* в игре дарит один человек: ни резерва, ни сбора здесь не нужно */
-        '  <p v-if="game" class="shortlist-hint">',
-        '    Вы тайный Санта для {{ recipient.short }} — дарите только вы, поэтому резервировать подарок не нужно.',
-        '    {{ recipient.name }} подборку не видит.',
-        '  </p>',
-        '  <p v-else class="shortlist-hint">',
-        '    Личный список кандидатов — {{ recipient.name }} его не видит.',
-        '    Поделитесь подборкой с теми, кто дарит вместе с вами.',
-        '  </p>',
-
-        '  <div v-if="recipient.hasWishlist" class="shortlist-note">',
-        '    <span>У {{ recipient.short }} есть свой вишлист — проверьте, что человек просил сам.</span>',
-        '    <button class="btn btn--outline btn--sm" @click="A.go(\'shared\')">Открыть вишлист</button>',
-        '  </div>',
+        '  </header>',
 
         '  <div v-if="!shortlist.length" class="emptytier" style="margin-top:20px">',
         '    Пока пусто. Добавляйте идеи кнопкой ＋ в углу карточки.',
         '  </div>',
         '  <div v-else class="grid grid--4" style="margin-top:20px">',
         '    <gift-card v-for="it in shortlist" :key="it.id" :item="it">',
+        /* те же действия, что видит даритель в чужом вишлисте: резерв и общий сбор */
         '      <template #media>'
         + '<button class="present__dismiss" @click="A.removeFromShortlist(it)" title="Убрать из подборки">✕</button>'
+        + '<giver-actions :item="it" />'
         + '</template>',
+        '      <template v-if="it.reserved===\'you\'">',
+        '        <button class="present__add present__add--ghost present__add--sm" @click="A.reserve(it,\'bought\')">Я купил это</button>',
+        '      </template>',
         '    </gift-card>',
         '  </div>',
         '</div>'
