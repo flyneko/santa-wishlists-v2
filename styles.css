@@ -86,10 +86,22 @@ a:hover{text-decoration:underline}
   width:46px; height:46px; border-radius:50%; font-size:24px; margin-bottom:10px;
   background:rgba(255,255,255,.92); box-shadow:0 2px 10px rgba(0,0,0,.18);
 }
+/* дата стоит у названия, а не в ряду цифр: это свойство самого вишлиста,
+   а не показатель вроде просмотров */
+.hero__head{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 .hero__title{
   font-size:clamp(1.5rem,2.6vw,1.95rem); font-weight:800; letter-spacing:-.02em;
   line-height:1.15; text-shadow:0 1px 12px rgba(0,0,0,.3);
 }
+.hero__date{
+  display:inline-flex; align-items:center; gap:6px; flex:none;
+  height:28px; padding:0 12px 0 10px; border-radius:999px;
+  background:rgba(255,255,255,.2); color:#fff;
+  border:1px solid rgba(255,255,255,.32); backdrop-filter:blur(6px);
+  font-size:13px; font-weight:700; white-space:nowrap;
+  text-shadow:0 1px 6px rgba(0,0,0,.28);
+}
+.hero__date .uiicon{ opacity:.85; }
 .hero__meta{
   display:flex; flex-wrap:wrap; align-items:center; gap:4px 0; margin-top:8px;
   font-size:13px; font-weight:600; color:rgba(255,255,255,.9);
@@ -115,6 +127,7 @@ a:hover{text-decoration:underline}
 .hact--primary span{ font-size:17px; line-height:1; color:var(--green); }
 .hero__cover{
   position:absolute; z-index:2; top:14px; right:14px;
+  display:inline-flex; align-items:center; gap:7px;
   height:34px; padding:0 13px; border-radius:9px;
   background:rgba(0,0,0,.34); color:#fff; font-size:13px; font-weight:600;
   backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.24);
@@ -469,7 +482,9 @@ a:hover{text-decoration:underline}
 /* список вишлистов в выпадающем меню — те же строки, что и в панели справа */
 .dd__panel:has(.wl-rail__row--list){ min-width:294px; padding:8px 0 8px; }
 .dd__panel .wl-rail__row--list{ --inset:14px; }
-.dd__panel .wl-rail__row--list + .dd__item--add{ margin:8px 14px 0; }
+/* в панели без боковых отступов кнопку отодвигаем сами; width:auto —
+   иначе 100% ширины плюс margin вылезали за границу выпадающего списка */
+.dd__panel:has(.wl-rail__row--list) .dd__item--add{ width:calc(100% - 28px); margin:8px 14px 0; }
 .dd__panel--left{ right:auto; left:0; }
 .dd__title{
   font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
@@ -544,11 +559,10 @@ a:hover{text-decoration:underline}
 .dd__cog{
   flex:none; width:28px; height:28px; border-radius:8px;
   color:var(--muted-2); display:flex; align-items:center; justify-content:center;
-  opacity:0; transition:opacity .15s, background .15s, color .15s;
+  transition:background .15s, color .15s;
 }
-.dd__person:hover .dd__cog{ opacity:1; }
+.dd__person:hover .dd__cog{ color:var(--muted); }
 .dd__cog:hover{ background:rgba(0,0,0,.07); color:var(--ink); }
-@media (hover:none){ .dd__cog{ opacity:1; } }
 .dd__title--sub{ padding-top:12px; }
 .dd__item{ align-items:center; }
 
@@ -932,3 +946,21 @@ a:hover{text-decoration:underline}
 }
 @keyframes feedspin{ to{ transform:rotate(360deg) } }
 @media (prefers-reduced-motion:reduce){ .feed__spin{ animation-duration:2.4s } }
+
+/* значок вишлиста: контурная иконка вместо эмодзи */
+.listicon{ display:block; flex:none; }
+.hero__emoji .listicon{ color:var(--ink); }
+.wl-rail__cover .listicon,
+.listava .listicon{ color:#fff; filter:drop-shadow(0 1px 2px rgba(0,0,0,.28)); }
+.emochip .listicon{ color:var(--muted); }
+.emochip.is-on .listicon{ color:var(--green); }
+
+/* значки интерфейса: выравниваем по тексту рядом */
+.uiicon{ display:block; flex:none; }
+.hero__meta > span{ gap:6px; }
+.hact .uiicon,
+.hero__cover .uiicon{ opacity:.9; }
+.locknote, .sharenote{ display:flex; align-items:center; gap:8px; }
+.dd__item--add, .wl-rail__open{ gap:7px; }
+.flink{ display:inline-flex; align-items:center; gap:5px; }
+.coverdrop__ic{ display:flex; color:var(--muted); }

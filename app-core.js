@@ -33,7 +33,44 @@
     { key: 'музыка', emoji: '🎵' }, { key: 'путешествия', emoji: '✈️' },
     { key: 'творчество', emoji: '🎨' }, { key: 'питомцы', emoji: '🐾' }
   ];
-  var LIST_EMOJI = ['🎁', '🎂', '🎄', '💼', '💍', '🏠', '🎓', '👶', '✈️', '🎃', '❤️', '🍀'];
+  /* значки вишлистов — Lucide (ISC), контурные, вместо эмодзи:
+     эмодзи рисуются разными шрифтами и в кружке смотрятся чужеродно */
+  var LIST_ICONS = [
+    { key: 'gift', label: 'Подарок', d: '<rect x="3" y="8" width="18" height="4" rx="1" /> <path d="M12 8v13" /> <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /> <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />' },
+    { key: 'cake', label: 'День рождения', d: '<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" /> <path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1" /> <path d="M2 21h20" /> <path d="M7 8v3" /> <path d="M12 8v3" /> <path d="M17 8v3" /> <path d="M7 4h.01" /> <path d="M12 4h.01" /> <path d="M17 4h.01" />' },
+    { key: 'tree-pine', label: 'Новый год', d: '<path d="m17 14 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 14h-.3a1 1 0 0 1-.7-1.7L9 9h-.2A1 1 0 0 1 8 7.3L12 3l4 4.3a1 1 0 0 1-.8 1.7H15l3 3.3a1 1 0 0 1-.7 1.7H17Z" /> <path d="M12 22v-3" />' },
+    { key: 'briefcase', label: 'Работа', d: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /> <rect width="20" height="14" x="2" y="6" rx="2" />' },
+    { key: 'heart', label: 'Любимым', d: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />' },
+    { key: 'house', label: 'Новоселье', d: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />' },
+    { key: 'graduation-cap', label: 'Выпускной', d: '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" /> <path d="M22 10v6" /> <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />' },
+    { key: 'baby', label: 'Малышу', d: '<path d="M9 12h.01" /> <path d="M15 12h.01" /> <path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5" /> <path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1" />' },
+    { key: 'plane', label: 'Путешествие', d: '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />' },
+    { key: 'party-popper', label: 'Праздник', d: '<path d="M5.8 11.3 2 22l10.7-3.79" /> <path d="M4 3h.01" /> <path d="M22 8h.01" /> <path d="M15 2h.01" /> <path d="M22 20h.01" /> <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10" /> <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17" /> <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7" /> <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z" />' },
+    { key: 'star', label: 'Особое', d: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />' },
+    { key: 'clover', label: 'На удачу', d: '<path d="M16.17 7.83 2 22" /> <path d="M4.02 12a2.827 2.827 0 1 1 3.81-4.17A2.827 2.827 0 1 1 12 4.02a2.827 2.827 0 1 1 4.17 3.81A2.827 2.827 0 1 1 19.98 12a2.827 2.827 0 1 1-3.81 4.17A2.827 2.827 0 1 1 12 19.98a2.827 2.827 0 1 1-4.17-3.81A1 1 0 1 1 4 12" /> <path d="m7.83 7.83 8.34 8.34" />' }
+  ];
+  /* значки интерфейса — тоже Lucide (ISC): в шапке вишлиста эмодзи выглядели
+     инородно и рисовались по-разному в разных системах */
+  var UI_ICONS = {
+    'calendar-days': '<path d="M8 2v4" /> <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" /> <path d="M8 14h.01" /> <path d="M12 14h.01" /> <path d="M16 14h.01" /> <path d="M8 18h.01" /> <path d="M12 18h.01" /> <path d="M16 18h.01" />',
+    'gift': '<rect x="3" y="8" width="18" height="4" rx="1" /> <path d="M12 8v13" /> <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /> <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />',
+    'eye': '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /> <circle cx="12" cy="12" r="3" />',
+    'lock': '<rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" />',
+    'plus': '<path d="M5 12h14" /> <path d="M12 5v14" />',
+    'share-2': '<circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" />',
+    'image': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2" /> <circle cx="9" cy="9" r="2" /> <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />',
+    'link': '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />',
+    'bar-chart-3': '<path d="M3 3v18h18" /> <path d="M18 17V9" /> <path d="M13 17V5" /> <path d="M8 17v-3" />',
+    'users': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <circle cx="9" cy="7" r="4" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <path d="M16 3.13a4 4 0 0 1 0 7.75" />',
+    'hand-coins': '<path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17" /> <path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9" /> <path d="m2 16 6 6" /> <circle cx="16" cy="9" r="2.9" /> <circle cx="6" cy="5" r="3" />',
+    'chevron-right': '<path d="m9 18 6-6-6-6" />',
+    'chevron-left': '<path d="m15 18-6-6 6-6" />',
+    'arrow-right': '<path d="M5 12h14" /> <path d="m12 5 7 7-7 7" />'
+  };
+
+  function iconOf(key) {
+    return LIST_ICONS.find(function (i) { return i.key === key; }) || LIST_ICONS[0];
+  }
   /* какие категории каталога отвечают каждому интересу из анкеты */
   var INTEREST_CATS = {
     'дом':          ['Интерьер', 'Светильники', 'Техника для дома'],
@@ -72,8 +109,8 @@
     { key: 'ice', grad: 'linear-gradient(135deg,#2D9CDB 0%,#56CCF2 100%)' }
   ];
   var GENDERS = [{ key: 'f', label: 'Женщина' }, { key: 'm', label: 'Мужчина' }, { key: 'x', label: 'Не важно' }];
-  function seedList(id, title, emoji, date, cover, items, grad) {
-    return { id: id, title: title, emoji: emoji, date: date, cover: cover, items: items,
+  function seedList(id, title, icon, date, cover, items, grad) {
+    return { id: id, title: title, icon: icon, date: date, cover: cover, items: items,
              grad: grad || COVERS[0].grad, bg: null };
   }
   /* товары со скидкой: индекс в каталоге -> старая цена.
@@ -138,7 +175,7 @@
       shortlists: { r1: [], r2: [], r3: [] },
 
       coverUrl: '',
-      newList: { title: '', emoji: '🎁', date: '', grad: '' },
+      newList: { title: '', icon: 'gift', date: '', grad: '' },
       addUrl: 'https://mrgeek.ru/product/solonka-i-perechnica-edinorogi/',
       addFound: false,
       addTier: 'top',
@@ -157,7 +194,7 @@
       spot: null,                 // подсвеченная область в презентации: screen | rail
 
       lists: [
-        seedList('l1', 'День рождения', '🎂', '14 марта', good(3).img, [
+        seedList('l1', 'День рождения', 'cake', '14 марта', good(3).img, [
           gift(3, 'top', 'розовый'),
           gift(1, 'top', ''),
           gift(2, 'top', ''),
@@ -170,7 +207,7 @@
           gift(13, 'someday', ''),
           gift(5, 'someday', '')
         ], COVERS[1].grad),
-        seedList('l2', 'Новый год', '🎄', '31 декабря', good(7).img, [
+        seedList('l2', 'Новый год', 'tree-pine', '31 декабря', good(7).img, [
           gift(31, 'top', ''),
           gift(2, 'top', ''),
           gift(14, 'top', ''),
@@ -183,7 +220,7 @@
           gift(5, 'someday', ''),
           gift(1, 'someday', '')
         ], COVERS[2].grad),
-        seedList('l3', 'Коллегам', '💼', '', good(4).img, [
+        seedList('l3', 'Коллегам', 'briefcase', '', good(4).img, [
           gift(4, 'top', ''),
           gift(10, 'top', ''),
           gift(12, 'top', ''),
@@ -267,7 +304,7 @@
   /* ───────── производные ───────── */
   /* заглушка на случай, когда вишлистов нет: экран и панель обращаются
      к currentList напрямую, иначе рендер падает на undefined */
-  var EMPTY_LIST = { id: '', title: 'Нет вишлиста', emoji: '🎁', date: '', cover: '',
+  var EMPTY_LIST = { id: '', title: 'Нет вишлиста', icon: 'gift', date: '', cover: '',
                      items: [], grad: COVERS[0].grad, bg: null };
   var currentList = computed(function () {
     return store.lists.find(function (l) { return l.id === store.currentListId; }) ||
@@ -495,14 +532,14 @@
                title: 'Мои<br>вишлисты',
                main: BASE + 'img/1f4cb.svg', side: BASE + 'img/2b50.svg' };
     },
-    listEmoji: LIST_EMOJI,
+    listIcons: LIST_ICONS,
     newList: function () {
-      store.newList = { title: '', emoji: '🎁', date: '',
+      store.newList = { title: '', icon: 'gift', date: '',
                         grad: COVERS[store.lists.length % COVERS.length].grad };
       store.openMenu = null;
       store.sheet = 'list';
     },
-    setNewListEmoji: function (e) { store.newList.emoji = e; },
+    setNewListIcon: function (k) { store.newList.icon = k; },
     setNewListGrad: function (g) { store.newList.grad = g; },
     canCreateList: function () { return (store.newList.title || '').trim().length > 0; },
     createList: function () {
@@ -510,7 +547,7 @@
       var title = (n.title || '').trim();
       if (!title) { toast('Назовите вишлист'); return; }
       var id = uid();
-      store.lists.push(seedList(id, title, n.emoji, n.date.trim(), good(6).img, [], n.grad));
+      store.lists.push(seedList(id, title, n.icon, n.date.trim(), good(6).img, [], n.grad));
       store.currentListId = id;
       store.listView = 'items';
       store.sheet = null;
@@ -625,6 +662,11 @@
       store.activeFilter = { from: 'chips', title: parts.join(' · '), items: A._pool() };
       store.ideasView = 'filtered';
     },
+    /* у блока может быть свой переход: «К вишлисту Ани» ведёт к вишлисту, а не в фильтр */
+    openCollectionOrGo: function (col) {
+      if (col.go) { A.go(col.go); return; }
+      A.openCollection(col);
+    },
     openCollection: function (col) {
       store.activeFilter = { from: 'collection', title: col.title, items: col.items };
       store.ideasView = 'filtered';
@@ -702,6 +744,7 @@
       var cols = [];
       if (r.hasWishlist) {
         cols.push({ key: 'their', title: 'Из вишлиста ' + r.short,
+                    link: 'К вишлисту ' + r.short, go: 'shared',
                     items: (r.wishlist || []).map(function (i) { return idea(i, 'человек попросил сам'); }) });
       }
       var picked = A.interestGoods(r);
@@ -1159,21 +1202,23 @@
         /* ── шапка списка: обложка + все действия ── */
         '  <header class="hero" :style="A.heroStyle(currentList)">',
         '    <div class="hero__scrim"></div>',
-        '    <button class="hero__cover" @click="A.openSheet(\'cover\')">🖼 Обложка</button>',
+        '    <button class="hero__cover" @click="A.openSheet(\'cover\')"><ui-icon name="image" :size="15" /> Обложка</button>',
         '    <div class="hero__body">',
-        '      <span class="hero__emoji">{{ currentList.emoji }}</span>',
-        '      <h1 class="hero__title">{{ currentList.title }}</h1>',
+        '      <span class="hero__emoji"><list-icon :name="currentList.icon" :size="24" /></span>',
+        '      <div class="hero__head">',
+        '        <h1 class="hero__title">{{ currentList.title }}</h1>',
+        '        <span v-if="currentList.date" class="hero__date"><ui-icon name="calendar-days" :size="15" /> {{ currentList.date }}</span>',
+        '      </div>',
         '      <div class="hero__meta">',
-        '        <span v-if="currentList.date">📅 {{ currentList.date }}</span>',
-        '        <span>🎁 {{ currentList.items.length }} подарков</span>',
-        '        <span>👁 34 просмотра</span>',
-        '        <span v-if="reserved">🔒 {{ reserved }} занято</span>',
+        '        <span><ui-icon name="gift" /> {{ currentList.items.length }} подарков</span>',
+        '        <span><ui-icon name="eye" /> 34 просмотра</span>',
+        '        <span v-if="reserved"><ui-icon name="lock" /> {{ reserved }} занято</span>',
         '      </div>',
         '      <div class="hero__acts">',
-        '        <button class="hact hact--primary" @click="A.openSheet(\'gift\')"><span>＋</span> Добавить подарок</button>',
-        '        <button class="hact" @click="A.openSheet(\'share\')">🔗 Поделиться</button>',
-        '        <button class="hact" @click="A.go(\'shared\')">👀 Взгляд дарителя</button>',
-        '        <button class="hact" :class="{\'is-on\':store.listView===\'activity\'}" @click="A.toggleActivity()">📊 Активность</button>',
+        '        <button class="hact hact--primary" @click="A.openSheet(\'gift\')"><ui-icon name="plus" :size="18" /> Добавить подарок</button>',
+        '        <button class="hact" @click="A.openSheet(\'share\')"><ui-icon name="share-2" /> Поделиться</button>',
+        '        <button class="hact" @click="A.go(\'shared\')"><ui-icon name="eye" /> Взгляд дарителя</button>',
+        '        <button class="hact" :class="{\'is-on\':store.listView===\'activity\'}" @click="A.toggleActivity()"><ui-icon name="bar-chart-3" /> Активность</button>',
         '      </div>',
         '    </div>',
         '  </header>',
@@ -1208,7 +1253,7 @@
         '    <div class="listempty__title">В этом вишлисте пока пусто</div>',
         '    <p class="listempty__hint">Добавьте подарок ссылкой из магазина или отметьте идею на странице «Идеи подарков».</p>',
         '    <div class="listempty__acts">',
-        '      <button class="btn btn--green btn--sm" @click="A.openSheet(\'gift\')">＋ Добавить подарок</button>',
+        '      <button class="btn btn--green btn--sm" @click="A.openSheet(\'gift\')"><ui-icon name="plus" :size="16" /> Добавить подарок</button>',
         '      <button class="btn btn--ghost btn--sm" @click="A.go(\'ideas\')">Смотреть идеи</button>',
         '    </div>',
         '  </div>',
@@ -1258,7 +1303,7 @@
         '              <div class="dd__title dd__title--sub">Мои люди</div>',
         '              <person-row v-for="r in A.ownRecipients()" :key="r.id" :person="r" />',
         '            </template>',
-        '            <button class="dd__item dd__item--add" @click="A.openPersonSheet()">＋ Новый человек</button>',
+        '            <button class="dd__item dd__item--add" @click="A.openPersonSheet()"><ui-icon name="plus" :size="16" /> Новый человек</button>',
         '          </div>',
         '        </span>',
         '      </h1>',
@@ -1292,9 +1337,9 @@
         /* ── обзор: карусели подборок ── */
         '  <template v-if="store.ideasView===\'browse\'">',
         '    <div v-for="col in cols" :key="col.key" class="carousel">',
-        '      <button class="carousel__head" @click="A.openCollection(col)">',
+        '      <button class="carousel__head" @click="A.openCollectionOrGo(col)">',
         '        <span class="section-title">{{ col.title }}</span>',
-        '        <span class="carousel__all">Все идеи',
+        '        <span class="carousel__all">{{ col.link || "Все идеи" }}',
         '          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">',
         '            <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m9.5 5.5 7 6.5-7 6.5"/>',
         '          </svg>',
@@ -1311,7 +1356,10 @@
         '          </gift-card>',
         '        </div>',
         '        <div class="swiper-slide carousel__card">',
-        '          <button class="carousel__more" @click="A.openCollection(col)"><span class="carousel__more-ic">→</span><span>Посмотреть<br>больше</span></button>',
+        '          <button class="carousel__more" @click="A.openCollectionOrGo(col)">',
+        '            <span class="carousel__more-ic"><ui-icon name="arrow-right" :size="19" /></span>',
+        '            <span>{{ col.link || "Посмотреть больше" }}</span>',
+        '          </button>',
         '        </div>',
         '      </swipe-row>',
         '    </div>',
@@ -1322,7 +1370,7 @@
         '  <template v-else>',
         '    <div class="activefilter">',
         '      <span v-if="A.fromCollection()" class="chip-active">{{ store.activeFilter.title }}<button @click="A.clearIdeasFilter()">✕</button></span>',
-        '      <a class="flink" @click="A.clearIdeasFilter()">← Все подборки</a>',
+        '      <a class="flink" @click="A.clearIdeasFilter()"><ui-icon name="chevron-left" :size="15" /> Все подборки</a>',
         '    </div>',
         '    <div class="grid grid--4">',
         '      <gift-card v-for="it in A.live(store.activeFilter.items)" :key="it.id" :item="it">',
@@ -1355,7 +1403,7 @@
         '          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>',
         '          <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
         '        </svg>Поделиться подборкой</button>',
-        '      <button class="flink" @click="A.go(\'ideas\')">← Вернуться к идеям</button>',
+        '      <button class="flink" @click="A.go(\'ideas\')"><ui-icon name="chevron-left" :size="15" /> Вернуться к идеям</button>',
         '    </div>',
         '  </div>',
 
@@ -1430,7 +1478,7 @@
         '      <div class="card__note">{{ [18,11,9][n] || 5 }} переходов</div>',
         '    </gift-row>',
         '  </div>',
-        '  <div class="locknote locknote--wide" style="margin-top:16px">🔒 Вы не видите, кто именно смотрел или резервировал — сюрприз сохраняется.</div>',
+        '  <div class="locknote locknote--wide" style="margin-top:16px"><ui-icon name="lock" :size="15" /> Вы не видите, кто именно смотрел или резервировал — сюрприз сохраняется.</div>',
         '</div>'
       ].join('')
     });
@@ -1453,20 +1501,22 @@
         '  <header class="hero" :style="A.heroStyle(list)">',
         '    <div class="hero__scrim"></div>',
         '    <div class="hero__body">',
-        '      <span class="hero__emoji">{{ list.emoji }}</span>',
-        '      <h1 class="hero__title">Вишлист Ани — «{{ list.title }}»</h1>',
+        '      <span class="hero__emoji"><list-icon :name="list.icon" :size="24" /></span>',
+        '      <div class="hero__head">',
+        '        <h1 class="hero__title">Вишлист Ани — «{{ list.title }}»</h1>',
+        '        <span v-if="list.date" class="hero__date"><ui-icon name="calendar-days" :size="15" /> {{ list.date }}</span>',
+        '      </div>',
         '      <div class="hero__meta">',
-        '        <span v-if="list.date">📅 {{ list.date }}</span>',
-        '        <span>🎁 {{ list.items.length }} подарков</span>',
-        '        <span>🔒 {{ taken }} уже разобрано</span>',
+        '        <span><ui-icon name="gift" /> {{ list.items.length }} подарков</span>',
+        '        <span><ui-icon name="lock" /> {{ taken }} уже разобрано</span>',
         '      </div>',
         '      <div class="hero__acts">',
-        '        <button class="hact hact--primary" @click="A.copyLink()">🔗 Скопировать ссылку</button>',
+        '        <button class="hact hact--primary" @click="A.copyLink()"><ui-icon name="link" :size="18" /> Скопировать ссылку</button>',
         '      </div>',
         '    </div>',
         '  </header>',
 
-        '  <p class="sharenote">🔒 Аня не увидит, кто и что зарезервировал</p>',
+        '  <p class="sharenote"><ui-icon name="lock" :size="15" /> Аня не увидит, кто и что зарезервировал</p>',
 
         '  <div v-for="g in groups" :key="g.key" class="tier">',
         '    <div class="tier__label"><tier-icon :tier="g.key" /> {{ g.label }} <span class="tier__count">{{ g.items.length }}</span></div>',
@@ -1564,6 +1614,30 @@
       ].join('')
     });
 
+    /* ── значок интерфейса ── */
+    app.component('UiIcon', {
+      props: ['name', 'size'],
+      computed: {
+        body: function () { return UI_ICONS[this.name] || ''; },
+        px: function () { return this.size || 16; }
+      },
+      template: '<svg class="uiicon" :width="px" :height="px" viewBox="0 0 24 24" fill="none"'
+              + ' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'
+              + ' aria-hidden="true" v-html="body"></svg>'
+    });
+
+    /* ── значок вишлиста: контурная иконка вместо эмодзи ── */
+    app.component('ListIcon', {
+      props: ['name', 'size'],
+      computed: {
+        body: function () { return iconOf(this.name).d; },
+        px: function () { return this.size || 22; }
+      },
+      template: '<svg class="listicon" :width="px" :height="px" viewBox="0 0 24 24" fill="none"'
+              + ' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'
+              + ' aria-hidden="true" v-html="body"></svg>'
+    });
+
     /* ── строка вишлиста: одна и та же в панели и в выпадающем списке ── */
     app.component('WishlistRow', {
       props: ['list'],
@@ -1571,7 +1645,7 @@
       computed: { on: function () { return this.list.id === store.currentListId; } },
       template: [
         '<button class="wl-rail__row wl-rail__row--list" :class="{\'is-on\':on}" @click="A.setList(list.id)">',
-        '  <span class="wl-rail__cover" :style="A.heroStyle(list)">{{ list.emoji }}</span>',
+        '  <span class="wl-rail__cover" :style="A.heroStyle(list)"><list-icon :name="list.icon" :size="20" /></span>',
         '  <div class="wl-rail__meta">',
         '    <div class="wl-rail__name wl-rail__name--list">{{ list.title }}</div>',
         /* счётчик рядом с названием, дата — следом через точку */
@@ -1648,7 +1722,7 @@
         '  <div v-else class="wl-rail__list">',
         '    <wishlist-row v-for="l in store.lists" :key="l.id" :list="l" />',
         '  </div>',
-        '  <button class="wl-rail__open" @click="A.newList()">＋ Новый вишлист</button>',
+        '  <button class="wl-rail__open" @click="A.newList()"><ui-icon name="plus" :size="16" /> Новый вишлист</button>',
         '</aside>',
 
         /* ── идеи для другого: подборка для выбранного человека ── */
@@ -1675,7 +1749,7 @@
         '      <button class="wl-rail__x" draggable="false" @click="A.removeFromShortlist(it)" title="Убрать">✕</button>',
         '    </div>',
         '  </div>',
-        '  <button v-if="shortlist.length" class="wl-rail__open" @click="A.go(\'shortlist\')">Открыть подборку →</button>',
+        '  <button v-if="shortlist.length" class="wl-rail__open" @click="A.go(\'shortlist\')">Открыть подборку <ui-icon name="chevron-right" :size="17" /></button>',
         '</aside>',
 
         /* ── идеи себе: мой вишлист ── */
@@ -1684,7 +1758,7 @@
         '    <div class="dd">',
         '      <button class="wl-rail__switch" @click.stop="A.toggleMenu(\'raillist\')">',
         /* обложка вишлиста — та же плитка, что в строках списка */
-        '        <span class="wl-rail__cover wl-rail__cover--ava" :style="A.heroStyle(currentList)">{{ currentList.emoji }}</span>',
+        '        <span class="wl-rail__cover wl-rail__cover--ava" :style="A.heroStyle(currentList)"><list-icon :name="currentList.icon" :size="15" /></span>',
         '        <span class="wl-rail__title">{{ currentList.title }}</span>',
         '        <b>{{ currentList.items.length }}</b>',
         '        <span class="dd__caret" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m6 9.5 6 6 6-6"/></svg></span>',
@@ -1692,7 +1766,7 @@
         '      <div v-if="store.openMenu===\'raillist\'" class="dd__panel dd__panel--left" @click.stop>',
         '        <div class="dd__title">Мои вишлисты</div>',
         '        <wishlist-row v-for="l in store.lists" :key="l.id" :list="l" />',
-        '        <button class="dd__item dd__item--add" @click="A.newList()">＋ Новый вишлист</button>',
+        '        <button class="dd__item dd__item--add" @click="A.newList()"><ui-icon name="plus" :size="16" /> Новый вишлист</button>',
         '      </div>',
         '    </div>',
         '  </div>',
@@ -1711,7 +1785,7 @@
         '      <button class="wl-rail__x" draggable="false" @click="A.removeFromList(it)" title="Убрать из вишлиста">✕</button>',
         '    </div>',
         '  </div>',
-        '  <button class="wl-rail__open" @click="A.go(\'lists\')">Открыть вишлист →</button>',
+        '  <button class="wl-rail__open" @click="A.go(\'lists\')">Открыть вишлист <ui-icon name="chevron-right" :size="17" /></button>',
         '</aside>',
         '</div>'
       ].join('')
@@ -1770,7 +1844,7 @@
         '  <div class="sheet__row">',
         '    <div class="sheet__label">Название</div>',
         '    <div class="personname">',
-        '      <span class="listava" :style="{backgroundImage:n.grad}">{{ n.emoji }}</span>',
+        '      <span class="listava" :style="{backgroundImage:n.grad}"><list-icon :name="n.icon" :size="24" /></span>',
         '      <input class="field" v-model="n.title" placeholder="День рождения, Новоселье, Коллегам…" @keyup.enter="A.createList()">',
         '    </div>',
         '  </div>',
@@ -1778,7 +1852,8 @@
         '  <div class="sheet__row">',
         '    <div class="sheet__label">Значок</div>',
         '    <div class="tagcloud">',
-        '      <button v-for="e in A.listEmoji" :key="e" class="emochip" :class="{\'is-on\':n.emoji===e}" @click="A.setNewListEmoji(e)">{{ e }}</button>',
+        '      <button v-for="i in A.listIcons" :key="i.key" class="emochip" :class="{\'is-on\':n.icon===i.key}"',
+        '              @click="A.setNewListIcon(i.key)" :title="i.label" :aria-label="i.label"><list-icon :name="i.key" :size="21" /></button>',
         '    </div>',
         '  </div>',
 
@@ -1839,7 +1914,7 @@
         '    <div class="sheet__label">Своя картинка</div>',
         '    <label class="coverdrop">',
         '      <input type="file" accept="image/*" @change="A.pickCoverFile($event)">',
-        '      <span class="coverdrop__ic">🖼</span>',
+        '      <span class="coverdrop__ic"><ui-icon name="image" :size="22" /></span>',
         '      <span>Загрузить с компьютера<em>JPG или PNG, лучше горизонтальную</em></span>',
         '    </label>',
         '    <div class="field-row">',
