@@ -33,9 +33,20 @@
       };
     },
     template: [
-      '<div class="ms-app">',
+      '<div class="ms-app" :class="{\'has-drawer\':store.railOpen||store.sideOpen}">',
 
-      '  <aside class="ms-side" :class="{\'is-collapsed\':store.asideCollapsed}">',
+      /* узкий экран: обе панели уезжают за край, поэтому сверху появляется своя шапка */
+      '  <header class="ms-mobtop">',
+      '    <button class="ms-burger" @click="A.toggleSide()" aria-label="Меню">',
+      '      <span></span><span></span><span></span>',
+      '    </button>',
+      '    <div class="ms-mobtop__logo">Мой С<img class="ms-side__santa" :src="IC+\'santa.png\'" alt="">нта</div>',
+      '    <button v-if="showRail" class="ms-mobtop__rail" @click="A.toggleRail()">',
+      '      <ui-icon name="list" :size="16" /><span>{{ A.railCount() }}</span>',
+      '    </button>',
+      '  </header>',
+
+      '  <aside class="ms-side" :class="{\'is-collapsed\':store.asideCollapsed,\'is-open\':store.sideOpen}">',
       '    <div class="ms-side__inn">',
       '      <button class="ms-side__collapse" @click="A.toggleAside()" aria-label="Свернуть меню">◀</button>',
       '      <div class="ms-side__logo">Мой С<img class="ms-side__santa" :src="IC+\'santa.png\'" alt="">нта</div>',
@@ -71,9 +82,17 @@
       '          <div :key="store.route + store.ideasFor"><component :is="screenComp" /></div>',
       '        </transition>',
       '      </div>',
-      '      <wishlist-rail v-if="showRail" />',
+      '      <wishlist-rail v-if="showRail" :class="{\'is-open\':store.railOpen}" />',
       '    </div>',
       '  </div>',
+
+      /* кнопка вызова панели — единственный путь к ней, пока она за краем экрана */
+      '  <button v-if="showRail" class="railfab" @click="A.toggleRail()">',
+      '    <ui-icon name="list" :size="17" />',
+      '    <span class="railfab__txt">{{ A.railLabel() }}</span>',
+      '    <b class="railfab__n">{{ A.railCount() }}</b>',
+      '  </button>',
+      '  <div class="drawerscrim" @click="A.closeDrawers()"></div>',
 
       '  <overlay-host />',
       '</div>'

@@ -193,6 +193,9 @@
       route: 'ideas',
       sheet: null,
       deck: false,          /* презентация: часть прототипной навигации там лишняя */
+      /* на узком экране обе боковые панели уезжают за край и открываются кнопками */
+      railOpen: false,
+      sideOpen: false,
       editId: null,
       buyItem: null,        /* подарок, покупку которого подтверждают */
       toastMsg: '',
@@ -439,10 +442,26 @@
     go: function (route) {
       store.route = route;
       store.sheet = null;
+      A.closeDrawers();
       if (WL.onNavigate) WL.onNavigate(route);
       if (window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     toggleAside: function () { store.asideCollapsed = !store.asideCollapsed; },
+    /* мобильные панели: открыта всегда одна, выбор внутри её закрывает */
+    toggleRail: function () { store.railOpen = !store.railOpen; store.sideOpen = false; },
+    toggleSide: function () { store.sideOpen = !store.sideOpen; store.railOpen = false; },
+    closeDrawers: function () { store.railOpen = false; store.sideOpen = false; },
+    /* что откроет кнопка — зависит от того, что сейчас в панели */
+    railLabel: function () {
+      if (store.route === 'lists') return 'Вишлисты';
+      if (store.ideasFor === 'other') return 'Подборка';
+      return currentList.value ? currentList.value.title : 'Вишлист';
+    },
+    railCount: function () {
+      if (store.route === 'lists') return store.lists.length;
+      if (store.ideasFor === 'other') return shortlist.value.length;
+      return currentList.value ? currentList.value.items.length : 0;
+    },
     /* короткая подсветка области — «смотрите сюда» в презентации */
     spotlight: function (name) {
       store.spot = name;
@@ -567,6 +586,7 @@
 
     setList: function (id) {
       store.currentListId = id; store.sheet = null; store.openMenu = null;
+      A.closeDrawers();
       toast('Вишлист: ' + currentList.value.title);
     },
     /* пустые приоритеты не показываем — пустой вишлист получает одну заглушку */
@@ -822,6 +842,7 @@
         A.buildRecipientCols(r);
       }
       store.ideasView = 'browse'; store.activeFilter = null; store.openMenu = null;
+      A.closeDrawers();
     },
 
     /* ── подборки под конкретного человека ──
@@ -1189,8 +1210,12 @@
         '  <div class="swiper carousel__swiper" ref="root">',
         '    <div class="swiper-wrapper"><slot /></div>',
         '  </div>',
-        '  <button class="cnav cnav--prev" :class="{\'is-off\':atStart}" ref="prev" aria-label="Назад">‹</button>',
-        '  <button class="cnav cnav--next" :class="{\'is-off\':atEnd}" ref="next" aria-label="Вперёд">›</button>',
+        '  <button class="cnav cnav--prev" :class="{\'is-off\':atStart}" ref="prev" aria-label="Назад">',
+        '    <ui-icon name="chevron-left" :size="20" />',
+        '  </button>',
+        '  <button class="cnav cnav--next" :class="{\'is-off\':atEnd}" ref="next" aria-label="Вперёд">',
+        '    <ui-icon name="chevron-right" :size="20" />',
+        '  </button>',
         '</div>'
       ].join('')
     });

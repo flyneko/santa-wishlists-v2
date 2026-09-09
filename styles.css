@@ -179,8 +179,11 @@ a:hover{text-decoration:underline}
 
 @media (max-width:700px){
   .hero{ min-height:248px; }
-  .hero__acts{ flex-wrap:wrap; padding-right:0; }
+  .hero__body{ padding:20px 18px 22px; }
+  .hero__acts{ flex-wrap:wrap; padding-right:0; margin-top:20px; }
   .hero__acts .hact{ flex:1 1 auto; justify-content:center; }
+  .hero__acts .hact--icon{ flex:none; }
+  .hero__cover{ bottom:auto; top:12px; right:12px; }
 }
 
 /* ───────────────────────── split layout ───────────────────────── */
@@ -685,7 +688,13 @@ a:hover{text-decoration:underline}
 .cnav--prev{ left:-13px; }
 .cnav--next{ right:-13px; }
 .cnav.is-off{ opacity:0 !important; pointer-events:none; }
-@media (hover:none){ .cnav{ display:none; } }
+/* на тач-экране наведения нет, а стрелки нужны: показываем сразу и уводим внутрь,
+   чтобы они не свисали за край страницы */
+@media (hover:none), (max-width:700px){
+  .cnav{ opacity:1; width:34px; height:34px; box-shadow:0 2px 14px rgba(0,0,0,.26); }
+  .cnav--prev{ left:2px; }
+  .cnav--next{ right:2px; }
+}
 
 .carousel__more{
   width:100%; align-self:stretch; min-height:100%;
@@ -801,6 +810,24 @@ a:hover{text-decoration:underline}
   .stats{grid-template-columns:1fr}
 }
 @media (max-width:420px){ .grid--3,.grid--4{grid-template-columns:1fr 1fr} }
+/* Выпадающие меню висят на своём триггере, а он стоит посреди строки —
+   на телефоне панель уезжает за правый край. Разворачиваем её нижним листом:
+   ширина экрана, своя прокрутка, поверх выехавших панелей. */
+@media (max-width:700px){
+  .dd__panel, .dd__panel--left{
+    position:fixed; z-index:90; left:0; right:0; bottom:0; top:auto;
+    width:auto; min-width:0; max-height:72vh;
+    overflow-y:auto; overscroll-behavior:contain;
+    border:0; border-radius:18px 18px 0 0;
+    padding:10px 10px calc(14px + env(safe-area-inset-bottom));
+    box-shadow:0 -18px 44px rgba(0,0,0,.26);
+  }
+  .dd__panel::after{ content:""; display:block; height:2px; }
+}
+@media (max-width:600px){
+  .ideas-head{ gap:10px; }
+  .searchbar .field{ height:52px; font-size:15px; }
+}
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 
 
@@ -1119,3 +1146,13 @@ a:hover{text-decoration:underline}
 .mde__raw-area{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; }
 .sheet__note{ margin-top:8px; font-size:12px; color:var(--muted-2); line-height:1.45; }
 .sheet__label{ display:flex; align-items:center; gap:6px; }
+
+/* ───────────────────── ширина текста на узком экране ─────────────────────
+   Потолки ширины нужны только на десктопе: заголовок и описание не должны
+   заезжать под веер подарков, а длинная строка — плохо читаться. На телефоне
+   веера нет и каждый пиксель на счету, поэтому потолки снимаем.
+   Блок стоит последним в файле — иначе базовые правила перебили бы его. */
+@media (max-width:880px){
+  .hero__head, .hero__meta, .hero__desc, .hero__note,
+  .wl-desc, .shortlist-hint, .listempty__hint, .navcard__title{ max-width:100%; }
+}

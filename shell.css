@@ -253,13 +253,83 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 }
 .wl-rail__price{ font-size:13px; font-weight:700; margin-top:5px; color:var(--price); }
 
+/* ═══════════════ узкий экран ═══════════════
+   Панель списка и меню не влезают рядом с контентом, но и прятать их насовсем
+   нельзя — иначе до вишлистов и «взгляда дарителя» не добраться. Обе уезжают
+   за край и открываются кнопками: панель — «язычком» справа снизу и счётчиком
+   в шапке, меню — бургером. */
+.ms-mobtop{ display:none; }
+.railfab{ display:none; }
+.drawerscrim{ display:none; }
+
 @media (max-width:1240px){
   .ms-body--rail{ grid-template-columns:1fr; }
-  .railcol{ display:none; }
+  .railcol{
+    position:fixed; z-index:80; right:0; top:0;
+    width:min(360px,88vw); height:100dvh; max-height:none;
+    padding:16px 14px calc(16px + env(safe-area-inset-bottom));
+    background:#fff; box-shadow:-16px 0 44px rgba(0,0,0,.22);
+    overflow-y:auto; overscroll-behavior:contain;
+    transform:translateX(103%); transition:transform .26s cubic-bezier(.32,.72,.35,1);
+  }
+  .railcol.is-open{ transform:none; }
+  .railcol .wl-rail{ max-height:none; }
+
+  .railfab{
+    position:fixed; z-index:60; right:14px; bottom:calc(16px + env(safe-area-inset-bottom));
+    display:inline-flex; align-items:center; gap:9px; height:46px; padding:0 16px;
+    border-radius:999px; background:var(--green); color:#fff;
+    font-size:14px; font-weight:700; box-shadow:0 8px 24px rgba(39,174,96,.4);
+  }
+  .railfab__txt{ max-width:38vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .railfab__n{
+    min-width:21px; height:21px; padding:0 6px; border-radius:999px;
+    background:rgba(255,255,255,.24); font-size:12px; font-weight:800;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .has-drawer .railfab{ opacity:0; pointer-events:none; }
+  .drawerscrim{
+    position:fixed; inset:0; z-index:70; background:rgba(0,0,0,.42);
+    opacity:0; pointer-events:none; transition:opacity .22s;
+  }
+  .has-drawer .drawerscrim{ display:block; opacity:1; pointer-events:auto; }
 }
+
 @media (max-width:960px){
-  .ms-side{ display:none; }
-  .ms-body{ padding-left:14px; padding-right:14px; padding-bottom:32px; }
+  .ms-mobtop{
+    display:flex; align-items:center; gap:12px;
+    position:sticky; top:0; z-index:50; height:56px; padding:0 14px;
+    background:#fff; border-bottom:1px solid var(--line);
+  }
+  .ms-mobtop__logo{ display:flex; align-items:center; gap:1px; font-weight:900; font-size:19px; color:#000; }
+  .ms-mobtop__logo .ms-side__santa{ width:19px; height:19px; }
+  .ms-burger{ display:flex; flex-direction:column; justify-content:center; gap:4px; width:32px; height:32px; }
+  .ms-burger span{ display:block; height:2px; border-radius:2px; background:var(--ink); }
+  .ms-mobtop__rail{
+    margin-left:auto; display:inline-flex; align-items:center; gap:6px;
+    height:34px; padding:0 12px; border-radius:999px;
+    background:var(--field); color:var(--ink); font-size:13px; font-weight:700;
+  }
+
+  .ms-app{ display:block; }
+  .ms-side{
+    display:block; position:fixed; z-index:80; left:0; top:0;
+    width:min(292px,84vw); height:100dvh; overflow-y:auto;
+    background:#F2F2F2; box-shadow:16px 0 44px rgba(0,0,0,.22);
+    transform:translateX(-103%); transition:transform .26s cubic-bezier(.32,.72,.35,1);
+  }
+  .ms-side.is-open{ transform:none; }
+  .ms-side.is-collapsed{ width:min(292px,84vw); }   /* в ящике сворачивать нечего */
+  .ms-side.is-collapsed .ms-side__labeltext,
+  .ms-side.is-collapsed .ms-side__chev{ display:inline; }
+  .ms-side.is-collapsed .ms-side__row{ padding-left:44px; }
+  .ms-side.is-collapsed .ms-side__item{ justify-content:flex-start; gap:13px; }
+  .ms-side.is-collapsed .ms-side__logo{ font-size:28px; gap:1px; }
+  .ms-side__collapse{ display:none; }
+  .ms-side__inn{ padding:24px 0; }
+  .ms-side__row{ margin-bottom:30px; }
+
+  .ms-body{ padding-left:14px; padding-right:14px; padding-bottom:96px; }
 }
 
 /* ═══════════════ презентация: колода ═══════════════ */
