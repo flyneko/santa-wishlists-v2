@@ -192,6 +192,7 @@
       route: 'ideas',
       sheet: null,
       editId: null,
+      buyItem: null,        /* подарок, покупку которого подтверждают */
       toastMsg: '',
       period: '30',
       surprise: true,
@@ -458,7 +459,15 @@
     isWideSheet: function () {
       return ['person', 'filters', 'cover', 'list', 'listsettings'].indexOf(store.sheet) >= 0;
     },
-    closeSheet: function () { store.sheet = null; },
+    closeSheet: function () { store.sheet = null; store.buyItem = null; },
+
+    /* «купил» отменить нельзя одним кликом — сначала спрашиваем */
+    askBought: function (item) { store.buyItem = item; store.sheet = 'bought'; },
+    confirmBought: function () {
+      var it = store.buyItem;
+      store.sheet = null; store.buyItem = null;
+      if (it) A.reserve(it, 'bought');
+    },
 
     findByUrl: function () { store.addFound = true; },
     confirmAdd: function () {
@@ -1079,7 +1088,7 @@
         '      <path fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" d="M7 7l10 10M17 7L7 17"/>',
         '    </svg>',
         '  </button>',
-        '  <button v-if="buyMode" class="wantbtn wantbtn--label wantbtn--buy" @click="A.reserve(item,\'bought\')"',
+        '  <button v-if="buyMode" class="wantbtn wantbtn--label wantbtn--buy" @click="A.askBought(item)"',
         '          title="Отметить купленным" aria-label="Отметить купленным">',
         '    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">',
         '      <path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" d="M6.6 3h10.8l2.6 3.6v12.6a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 19.2V6.6Z"/>',
@@ -1334,7 +1343,6 @@
         '      <div class="hero__acts">',
         '        <button class="hact hact--primary" @click="A.openSheet(\'gift\')"><ui-icon name="plus" :size="18" /> Добавить подарок</button>',
         '        <button class="hact" @click="A.openSheet(\'share\')"><ui-icon name="share-2" /> Поделиться</button>',
-        '        <button class="hact" @click="A.go(\'shared\')"><ui-icon name="eye" /> Взгляд дарителя</button>',
         '        <button class="hact" :class="{\'is-on\':store.listView===\'activity\'}" @click="A.toggleActivity()"><ui-icon name="bar-chart-3" /> Активность</button>',
         '      </div>',
         '    </div>',
@@ -2005,6 +2013,27 @@
     });
 
     /* ── модалка: стоп-лист ── */
+    app.component('SheetBought', {
+      setup: function () { return { store: store, A: A }; },
+      template: [
+        '<div>',
+        '  <div class="sheet__title">Отметить купленным? <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
+        '  <p class="sheet__hint">Подарок останется занятым за вами, а владелец по-прежнему не увидит, кто его дарит.</p>',
+        '  <div v-if="store.buyItem" class="buyrow">',
+        '    <thumb :image="store.buyItem.img" cls="buyrow__img" />',
+        '    <div class="buyrow__body">',
+        '      <div class="buyrow__name">{{ store.buyItem.name }}</div>',
+        '      <div class="buyrow__price">{{ A.money(store.buyItem.price) }}</div>',
+        '    </div>',
+        '  </div>',
+        '  <div class="sheet__foot">',
+        '    <button class="btn btn--ghost" @click="A.closeSheet()">Отмена</button>',
+        '    <button class="btn btn--green" @click="A.confirmBought()">Да, купил</button>',
+        '  </div>',
+        '</div>'
+      ].join('')
+    });
+
     app.component('SheetStop', {
       setup: function () { return { A: A, currentList: currentList }; },
       template: [
@@ -2322,6 +2351,7 @@
         '        <sheet-list-settings v-else-if="store.sheet===\'listsettings\'" />',
         '        <sheet-desc v-else-if="store.sheet===\'desc\'" />',
         '        <sheet-stop v-else-if="store.sheet===\'stop\'" />',
+        '        <sheet-bought v-else-if="store.sheet===\'bought\'" />',
         '        <sheet-list v-else-if="store.sheet===\'list\'" />',
         '        <add-gift-form v-else-if="store.sheet===\'gift\'" />',
         '      </div>',

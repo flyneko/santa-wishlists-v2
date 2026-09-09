@@ -806,6 +806,15 @@ a:hover{text-decoration:underline}
 /* ───────────────────── модалка «Для кого подбираем» ───────────────────── */
 .sheet__hint{ font-size:13px; color:var(--muted); margin:-6px 0 18px; line-height:1.5; }
 .sheet__count{ margin-left:8px; font-weight:600; color:var(--muted-2); text-transform:none; }
+/* карточка подарка в окне подтверждения покупки */
+.buyrow{
+  display:flex; align-items:center; gap:14px;
+  padding:12px; border:1px solid var(--line); border-radius:14px; background:var(--field);
+}
+.buyrow__img{ width:64px; height:64px; flex:none; border-radius:10px; overflow:hidden; background:#fff; }
+.buyrow__body{ min-width:0; }
+.buyrow__name{ font-size:14.5px; font-weight:600; line-height:1.3; }
+.buyrow__price{ margin-top:4px; font-size:15px; font-weight:700; color:var(--price); }
 .sheet__foot{ display:flex; gap:10px; margin-top:22px; }
 .sheet__foot .btn{ flex:1; height:46px; padding:0 16px; }
 .btn--ghost{ background:#fff; border-color:var(--line); color:var(--muted); }

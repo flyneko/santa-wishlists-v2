@@ -46,6 +46,15 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 .ms-side__item.is-active{ color:#000; font-weight:700; }
 .ms-side__ico{ width:22px; height:22px; object-fit:contain; flex:none; }
 .ms-side__chev{ margin-left:-16px; margin-right:2px; font-size:10px; color:rgba(0,0,0,.32); flex:none; }
+/* подпункт под «Вишлистом»: выровнен по его подписи, тише по весу */
+.ms-side__sub{
+  display:flex; align-items:center; gap:9px; width:100%; text-align:left;
+  margin-top:14px; padding-left:35px;
+  color:rgba(0,0,0,.42); font-size:14px; line-height:20px; transition:color .12s;
+}
+.ms-side__sub:hover{ color:#000; }
+.ms-side__sub.is-active{ color:#000; font-weight:700; }
+.ms-side.is-collapsed .ms-side__sub{ justify-content:center; padding-left:0; gap:0; }
 .ms-side__ava{
   width:26px; height:26px; border-radius:50%; background:#7B61FF; color:#fff;
   font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex:none;
