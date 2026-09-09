@@ -559,6 +559,11 @@
 
     /* ── обложка шапки списка ── */
     covers: COVERS,
+    /* до четырёх последних подарков — из них складывается веер в шапке */
+    heroFan: function (l) {
+      if (!l || !l.items) return [];
+      return l.items.slice(0, 4);
+    },
     heroStyle: function (l) {
       if (!l) return {};
       if (l.bg) return { backgroundImage: 'url(' + l.bg + ')' };
@@ -1202,6 +1207,15 @@
         /* ── шапка списка: обложка + все действия ── */
         '  <header class="hero" :style="A.heroStyle(currentList)">',
         '    <div class="hero__scrim"></div>',
+        /* веер из фотографий самого вишлиста: обложка перестаёт быть просто фоном */
+        '    <div class="hero__fan" aria-hidden="true">',
+        '      <span v-for="(it,n) in A.heroFan(currentList)" :key="it.id" class="hero__fancard" :class="\'i\'+n">',
+        '        <thumb :image="it.img" cls="" />',
+        '      </span>',
+        '      <span v-if="!A.heroFan(currentList).length" class="hero__fanempty">',
+        '        <list-icon :name="currentList.icon" :size="40" />',
+        '      </span>',
+        '    </div>',
         '    <button class="hero__cover" @click="A.openSheet(\'cover\')"><ui-icon name="image" :size="15" /> Обложка</button>',
         '    <div class="hero__body">',
         '      <span class="hero__emoji"><list-icon :name="currentList.icon" :size="24" /></span>',
