@@ -188,12 +188,14 @@
   var deck = reactive({ i: 0 });
   /* курсор автопоказа */
   var demo = reactive({ on: false, x: -100, y: -100, down: false, hint: '', step: -1,
-                        total: 0, flipX: false, flipY: false });
+                        total: 0, flipX: false, flipY: false,
+                        /* прямоугольник подсвеченного элемента: вокруг него затемняем всё */
+                        hl: null });
   var timer = null, run = 0;
 
   function stop() {
     run++; clearTimeout(timer);
-    demo.on = false; demo.down = false; demo.step = -1; demo.hint = '';
+    demo.on = false; demo.down = false; demo.step = -1; demo.hint = ''; demo.hl = null;
   }
   /* Цель может оказаться за пределами окна — сначала подкручиваем к ней страницу,
      иначе курсор укажет туда, где зритель ничего не видит.
@@ -212,11 +214,14 @@
   }
 
   function moveTo(node) {
-    if (!node || !node.getBoundingClientRect) return false;
+    if (!node || !node.getBoundingClientRect) { demo.hl = null; return false; }
     var r = node.getBoundingClientRect();
-    if (!r.width && !r.height) return false;
+    if (!r.width && !r.height) { demo.hl = null; return false; }
     demo.x = r.left + r.width / 2;
     demo.y = r.top + r.height / 2;
+    var pad = 8;
+    demo.hl = { left: r.left - pad, top: r.top - pad,
+                width: r.width + pad * 2, height: r.height + pad * 2 };
     /* у правого/нижнего края подсказку разворачиваем, иначе она уедет за экран */
     var vw = window.innerWidth || 1280, vh = window.innerHeight || 800;
     demo.flipX = demo.x > vw - 330;
@@ -257,9 +262,10 @@
             demo.down = false;
             if (s.run) s.run();
             k += 1;
-            timer = setTimeout(step, 1500);   /* пауза, чтобы успеть прочитать подсказку */
-          }, 220);
-        }, 900);
+            /* держим шаг тем дольше, чем длиннее подсказка: примерно 11 знаков в секунду */
+            timer = setTimeout(step, Math.min(4200, 1500 + (s.hint || '').length * 42));
+          }, 240);
+        }, 1150);
       }, scroll);
     }
     timer = setTimeout(step, 700);
@@ -347,6 +353,9 @@
       '      </div>',
       '    </main>',
       '  </div>',
+      /* затемняем всё, кроме подсвеченного элемента: «окно» вырезано тенью */
+      '  <div v-if="demo.hl" class="demo__hole" :class="{\'is-on\':demo.on,\'is-down\':demo.down}"',
+      '       :style="{left:demo.hl.left+\'px\',top:demo.hl.top+\'px\',width:demo.hl.width+\'px\',height:demo.hl.height+\'px\'}"></div>',
       /* курсор и подсказка едут вместе: пояснение всегда у той точки, куда жмём */
       '  <div class="demo" :class="{\'is-on\':demo.on,\'is-down\':demo.down,\'flip-x\':demo.flipX,\'flip-y\':demo.flipY}"',
       '       :style="{transform:\'translate(\'+demo.x+\'px,\'+demo.y+\'px)\'}">',
