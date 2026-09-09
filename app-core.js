@@ -191,6 +191,7 @@
     var s = {
       route: 'ideas',
       sheet: null,
+      deck: false,          /* презентация: часть прототипной навигации там лишняя */
       editId: null,
       buyItem: null,        /* подарок, покупку которого подтверждают */
       toastMsg: '',
@@ -1508,8 +1509,8 @@
         /* в игре дарит один человек: ни резерва, ни сбора здесь не нужно */
         note: function () {
           return this.game
-            ? 'Вы тайный Санта для ' + recipient.value.short + ' — подборку ' + recipient.value.name + ' не видит. '
-              + 'Кандидата можно зарезервировать или позвать других скинуться.'
+            ? 'Вы тайный Санта для ' + recipient.value.short + ' — дарите только вы, '
+              + 'поэтому резервировать кандидатов не нужно. ' + recipient.value.name + ' подборку не видит.'
             : 'Личный список кандидатов. Поделитесь им с теми, кто дарит вместе с вами: '
               + 'подарок можно занять за собой или собрать на него вместе.';
         },
@@ -1553,10 +1554,11 @@
         '  </div>',
         '  <div v-else class="grid grid--4" style="margin-top:20px">',
         '    <gift-card v-for="it in shortlist" :key="it.id" :item="it">',
-        /* те же действия, что видит даритель в чужом вишлисте: резерв и общий сбор */
+        /* в игре дарит один человек — резервировать не у кого, остаётся сама вещь;
+           для своих людей действуют те же кнопки, что у дарителя в чужом вишлисте */
         '      <template #media>'
         + '<button class="present__dismiss" @click="A.removeFromShortlist(it)" title="Убрать из подборки">✕</button>'
-        + '<giver-actions :item="it" />'
+        + '<giver-actions v-if="!game" :item="it" />'
         + '</template>',
         '    </gift-card>',
         '  </div>',
@@ -1822,7 +1824,7 @@
         '<div class="railcol" :class="{\'is-spot\':store.spot===\'rail\'}">',
         /* переход между идеями и списками — вместо верхних вкладок */
         /* крупная карточка-переход вместо верхних вкладок */
-        '  <button class="navcard" :class="A.navCard().cls" @click="A.go(A.navCard().route)">',
+        '  <button v-if="!store.deck" class="navcard" :class="A.navCard().cls" @click="A.go(A.navCard().route)">',
         '    <span class="navcard__art">',
         '      <img class="navcard__art-main" :src="A.navCard().main" alt="">',
         '      <img class="navcard__art-side" :src="A.navCard().side" alt="">',

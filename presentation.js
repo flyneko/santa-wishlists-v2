@@ -107,7 +107,7 @@
           st.route = 'shortlist';
         },
         title: 'Складываю кандидатов и выбираю одного',
-        sub: 'Подборку видит только Санта. Кандидата можно занять за собой или позвать других скинуться.',
+        sub: 'Подборку видит только Санта. Резервировать нечего: в игре подарок дарит один человек — вы.',
         steps: [
           { hint: 'Подборка видна только вам: человек в неё не заглянет',
             at: function () { return el('.hero__note'); } },
@@ -186,13 +186,14 @@
   /* курсор автопоказа */
   var demo = reactive({ on: false, x: -100, y: -100, down: false, hint: '', step: -1,
                         total: 0, flipX: false, flipY: false,
-                        /* прямоугольник подсвеченного элемента: вокруг него затемняем всё */
-                        hl: null });
+                        /* прямоугольник подсвеченного элемента и рабочая область,
+                           внутри которой его окружает затемнение */
+                        hl: null, ws: null });
   var timer = null, follow = null, run = 0;
 
   function stop() {
     run++; clearTimeout(timer); clearTimeout(follow);
-    demo.on = false; demo.down = false; demo.step = -1; demo.hint = ''; demo.hl = null;
+    demo.on = false; demo.down = false; demo.step = -1; demo.hint = ''; demo.hl = null; demo.ws = null;
   }
   /* Цель может оказаться за пределами окна — сначала подкручиваем к ней страницу,
      иначе курсор укажет туда, где зритель ничего не видит.
@@ -220,6 +221,12 @@
     var pad = 8;
     demo.hl = { left: r.left - pad, top: r.top - pad,
                 width: r.width + pad * 2, height: r.height + pad * 2 };
+    /* затемняем только макет, а не всю страницу: тексты слайда должны читаться */
+    var box = document.querySelector('.deck__stagebody');
+    if (box) {
+      var b = box.getBoundingClientRect();
+      demo.ws = { left: b.left, top: b.top, width: b.width, height: b.height };
+    }
     /* у правого/нижнего края подсказку разворачиваем, иначе она уедет за экран */
     var vw = window.innerWidth || 1280, vh = window.innerHeight || 800;
     demo.flipX = demo.x > vw - 330;
@@ -298,13 +305,32 @@
     if (i >= 0) goStory(i);
   };
 
+  st.deck = true;                     /* карточка-переход между экранами тут не нужна */
+
   var app = V.createApp({
     setup: function () {
       var story = computed(function () { return STORIES[deck.i]; });
       var screenComp = computed(function () { return WL.screenByRoute[st.route]; });
       var showRail = computed(function () { return st.route === 'lists' || st.route === 'ideas'; });
+      /* четыре полосы затемнения: рабочая область минус подсвеченный прямоугольник */
+      var maskParts = computed(function () {
+        var w = demo.ws, h = demo.hl;
+        if (!w || !h) return [];
+        var wr = w.left + w.width, wb = w.top + w.height;
+        var top = Math.min(Math.max(h.top, w.top), wb);
+        var bottom = Math.max(Math.min(h.top + h.height, wb), w.top);
+        var left = Math.min(Math.max(h.left, w.left), wr);
+        var right = Math.max(Math.min(h.left + h.width, wr), w.left);
+        var px = function (n) { return Math.max(0, n) + 'px'; };
+        return [
+          { left: w.left + 'px', top: w.top + 'px', width: px(w.width), height: px(top - w.top) },
+          { left: w.left + 'px', top: bottom + 'px', width: px(w.width), height: px(wb - bottom) },
+          { left: w.left + 'px', top: top + 'px', width: px(left - w.left), height: px(bottom - top) },
+          { left: right + 'px', top: top + 'px', width: px(wr - right), height: px(bottom - top) }
+        ];
+      });
       return { deck: deck, demo: demo, store: st, story: story, screenComp: screenComp,
-               showRail: showRail, stories: STORIES, groups: GROUPS,
+               showRail: showRail, stories: STORIES, groups: GROUPS, maskParts: maskParts,
                goStory: goStory, toggle: toggle, stop: stop };
     },
     template: [
@@ -360,7 +386,8 @@
       '      </div>',
       '    </main>',
       '  </div>',
-      /* затемняем всё, кроме подсвеченного элемента: «окно» вырезано тенью */
+      /* затемнение живёт четырьмя полосами вокруг цели и не выходит за макет */
+      '  <div v-for="(r,n) in maskParts" :key="n" class="demo__dim" :class="{\'is-on\':demo.on}" :style="r"></div>',
       '  <div v-if="demo.hl" class="demo__hole" :class="{\'is-on\':demo.on,\'is-down\':demo.down}"',
       '       :style="{left:demo.hl.left+\'px\',top:demo.hl.top+\'px\',width:demo.hl.width+\'px\',height:demo.hl.height+\'px\'}"></div>',
       /* курсор и подсказка едут вместе: пояснение всегда у той точки, куда жмём */

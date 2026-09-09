@@ -438,18 +438,23 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 /* «Окно» в затемнении: вокруг цели лежит огромная тень, поэтому подсвеченным
    остаётся только нужный элемент. Ничего не двигаем и не меняем z-index у самого
    элемента — иначе карточки внутри Swiper (у него свой transform) не поднялись бы. */
-.demo__hole{
+/* затемняем только макет: заголовок слайда и меню слева остаются читаемыми,
+   поэтому вместо тени на весь экран — четыре полосы вокруг цели */
+.demo__dim{
   position:fixed; z-index:190; pointer-events:none;
+  background:rgba(12,14,20,0); transition:background .4s ease;
+}
+.demo__dim.is-on{ background:rgba(12,14,20,.55); }
+.demo__hole{
+  position:fixed; z-index:191; pointer-events:none;
   border-radius:14px;
-  box-shadow:0 0 0 9999px rgba(12,14,20,0), inset 0 0 0 2px rgba(39,174,96,0);
+  box-shadow:inset 0 0 0 2px rgba(39,174,96,0);
   transition:left .5s cubic-bezier(.33,.8,.3,1), top .5s cubic-bezier(.33,.8,.3,1),
              width .5s cubic-bezier(.33,.8,.3,1), height .5s cubic-bezier(.33,.8,.3,1),
              box-shadow .4s ease;
 }
-.demo__hole.is-on{
-  box-shadow:0 0 0 9999px rgba(12,14,20,.55), inset 0 0 0 2px rgba(39,174,96,.9);
-}
-.demo__hole.is-down{ box-shadow:0 0 0 9999px rgba(12,14,20,.5), inset 0 0 0 3px var(--green); }
+.demo__hole.is-on{ box-shadow:inset 0 0 0 2px rgba(39,174,96,.9); }
+.demo__hole.is-down{ box-shadow:inset 0 0 0 3px var(--green); }
 
 /* ── курсор автопоказа вместе с подсказкой ──
    Пояснение висит у той самой точки, куда сейчас нажмут, а не отдельной
@@ -498,6 +503,6 @@ body{ background:#fff; color:var(--ink); font-family:"Inter",-apple-system,Blink
 .demo.flip-y .demo__tip::before{ top:auto; bottom:12px; }
 
 @media (prefers-reduced-motion:reduce){
-  .demo, .demo__hole{ transition:box-shadow .3s ease, opacity .25s; }
+  .demo, .demo__hole, .demo__dim{ transition:box-shadow .3s ease, background .3s ease, opacity .25s; }
   .demo.is-down .demo__ring{ animation:none; }
 }
