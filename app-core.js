@@ -557,8 +557,10 @@
       store.ideasSelf.concat(A._pool()).forEach(function (i) { if (i.pid === it.pid) i.saved = false; });
       toast('Убрано из «' + currentList.value.title + '»');
     },
-    removeItem: function () {
-      currentList.value.items = currentList.value.items.filter(function (i) { return i.id !== store.editId; });
+    /* удаляют с самой карточки, поэтому берём подарок из аргумента */
+    removeItem: function (it) {
+      var id = it && it.id ? it.id : store.editId;
+      currentList.value.items = currentList.value.items.filter(function (i) { return i.id !== id; });
       store.sheet = null; toast('Удалено из вишлиста');
     },
 
@@ -1361,6 +1363,15 @@
         + '</div>'
         + '<button v-if="g.key!==\'top\'" class="present__pin" @click="A.bump(it,\'top\')" title="В «Больше всего хочу»">'
         + '<tier-icon tier="top" /></button>'
+        /* удалить — в углу снимка, как крестик в подборке */
+        + '<button class="present__dismiss present__dismiss--del" @click="A.removeItem(it)"'
+        + ' title="Удалить из вишлиста" aria-label="Удалить из вишлиста">'
+        + '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"'
+        + ' stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'
+        + '<path d="M4 6.6h16"/><path d="M9.2 6.6V5a1.4 1.4 0 0 1 1.4-1.4h2.8A1.4 1.4 0 0 1 14.8 5v1.6"/>'
+        + '<path d="M18.2 6.6 17.4 19a1.9 1.9 0 0 1-1.9 1.8H8.5A1.9 1.9 0 0 1 6.6 19L5.8 6.6"/>'
+        + '<path d="M10.3 10.6v6M13.7 10.6v6"/>'
+        + '</svg></button>'
         + '</template>',
         '      </gift-card>',
         '    </div>',
@@ -1937,10 +1948,8 @@
         '    <div class="sheet__label">Заметка для дарителя</div>',
         '    <input class="field" v-model="store.editNote" placeholder="цвет, размер, модель…">',
         '  </div>',
-        '  <div style="display:flex;gap:8px">',
-        '    <button class="btn btn--white btn--sm" style="flex:none" @click="A.removeItem()">Удалить</button>',
-        '    <button class="btn btn--green btn--sm" style="flex:1" @click="A.saveEdit()">Сохранить</button>',
-        '  </div>',
+        /* удаление живёт на самой карточке — в окне правки ему не место */
+        '  <button class="btn btn--green btn--sm btn--block" @click="A.saveEdit()">Сохранить</button>',
         '</div>'
       ].join('')
     });

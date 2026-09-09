@@ -233,9 +233,7 @@ a:hover{text-decoration:underline}
   border-radius:999px;
   transform:rotate(-7deg);
   box-shadow:0 4px 12px rgba(247,79,79,.36);
-  transition:transform .2s cubic-bezier(.34,1.56,.64,1);
 }
-.present:hover .present__sale{ transform:rotate(-2deg) scale(1.05); }
 /* если сверху уже лежит лента «уже дарят» — сдвигаем скидку под неё */
 .present.is-taken .present__sale{ top:38px; background:var(--muted-2); box-shadow:none; }
 .present__foot{ margin-top:auto; padding-top:12px; display:flex; flex-direction:column; gap:8px; }
@@ -256,6 +254,8 @@ a:hover{text-decoration:underline}
   font-size:13px; opacity:0; transition:opacity .15s;
 }
 .present:hover .present__dismiss{ opacity:1; }
+/* удаление подарка из своего вишлиста — то же место, но предупреждающий цвет */
+.present__dismiss--del:hover{ background:var(--red); color:#fff; }
 /* «Хочу» — яркая кнопка в углу снимка вместо строки-кнопки под карточкой */
 .wantbtn{
   position:absolute; z-index:4; right:8px; bottom:8px;
