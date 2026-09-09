@@ -57,10 +57,12 @@
             at: function () { return nth('.wl-rail__row--list', 1); },
             run: function () { var i = st.lists.findIndex(function (l) { return l.id === st.currentListId; });
                                A.setList(st.lists[(i + 1) % st.lists.length].id); A.spotlight('rail'); } },
-          { hint: 'Кнопка «Обложка» — свой файл или готовый фон для шапки',
+          { hint: 'Описание и стоп-лист — что дарить точно не стоит',
+            at: function () { return el('.stoplist'); } },
+          { hint: 'Настройки вишлиста: название, значок, описание, обложка',
             at: function () { return el('.hero__cover'); },
-            run: function () { A.openSheet('cover'); } },
-          { hint: 'Выбираем фон — шапка вишлиста меняется сразу',
+            run: function () { A.openListSettings(); } },
+          { hint: 'Меняем фон — шапка обновляется сразу',
             at: function () { return nth('.covergrid .coverswatch', 3); },
             run: function () { A.setCoverGrad(A.covers[3].grad); A.closeSheet(); } }
         ] },

@@ -65,7 +65,13 @@
     'hand-coins': '<path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17" /> <path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9" /> <path d="m2 16 6 6" /> <circle cx="16" cy="9" r="2.9" /> <circle cx="6" cy="5" r="3" />',
     'chevron-right': '<path d="m9 18 6-6-6-6" />',
     'chevron-left': '<path d="m15 18-6-6 6-6" />',
-    'arrow-right': '<path d="M5 12h14" /> <path d="m12 5 7 7-7 7" />'
+    'arrow-right': '<path d="M5 12h14" /> <path d="m12 5 7 7-7 7" />',
+    'settings': '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /> <circle cx="12" cy="12" r="3" />',
+    'bold': '<path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />',
+    'italic': '<line x1="19" x2="10" y1="4" y2="4" /> <line x1="14" x2="5" y1="20" y2="20" /> <line x1="15" x2="9" y1="4" y2="20" />',
+    'list': '<line x1="8" x2="21" y1="6" y2="6" /> <line x1="8" x2="21" y1="12" y2="12" /> <line x1="8" x2="21" y1="18" y2="18" /> <line x1="3" x2="3.01" y1="6" y2="6" /> <line x1="3" x2="3.01" y1="12" y2="12" /> <line x1="3" x2="3.01" y1="18" y2="18" />',
+    'link': '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />',
+    'ban': '<circle cx="12" cy="12" r="10" /> <path d="m4.9 4.9 14.2 14.2" />'
   };
 
   function iconOf(key) {
@@ -109,9 +115,47 @@
     { key: 'ice', grad: 'linear-gradient(135deg,#2D9CDB 0%,#56CCF2 100%)' }
   ];
   var GENDERS = [{ key: 'f', label: 'Женщина' }, { key: 'm', label: 'Мужчина' }, { key: 'x', label: 'Не важно' }];
-  function seedList(id, title, icon, date, cover, items, grad) {
+  function seedList(id, title, icon, date, cover, items, grad, desc, stop) {
     return { id: id, title: title, icon: icon, date: date, cover: cover, items: items,
-             grad: grad || COVERS[0].grad, bg: null };
+             grad: grad || COVERS[0].grad, bg: null,
+             desc: desc || '', stop: stop || '' };
+  }
+
+  /* ── маленький markdown ──
+     Поддерживаем ровно то, что даёт панель редактора: **жирный**, *курсив*,
+     ссылки, списки и абзацы. Больше в описании вишлиста и не нужно. */
+  function esc(t) {
+    return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function inline(t) {
+    return esc(t)
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/(^|[^*])\*([^*]+)\*/g, '$1<i>$2</i>')
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  }
+  function mdToHtml(md) {
+    var out = [], list = null;
+    (md || '').split(/\r?\n/).forEach(function (line) {
+      var li = line.match(/^\s*[-*+]\s+(.*)$/);
+      if (li) { if (!list) { list = []; } list.push('<li>' + inline(li[1]) + '</li>'); return; }
+      if (list) { out.push('<ul>' + list.join('') + '</ul>'); list = null; }
+      if (line.trim()) out.push('<p>' + inline(line) + '</p>');
+    });
+    if (list) out.push('<ul>' + list.join('') + '</ul>');
+    return out.join('');
+  }
+  function htmlToMd(html) {
+    var t = (html || '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div)>/gi, '\n')
+      .replace(/<(b|strong)>/gi, '**').replace(/<\/(b|strong)>/gi, '**')
+      .replace(/<(i|em)>/gi, '*').replace(/<\/(i|em)>/gi, '*')
+      .replace(/<li>/gi, '- ').replace(/<\/li>/gi, '\n')
+      .replace(/<a [^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, '[$2]($1)')
+      .replace(/<[^>]+>/g, '');
+    return t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+            .replace(/\n{3,}/g, '\n\n').trim();
   }
   /* товары со скидкой: индекс в каталоге -> старая цена.
      Скидка принадлежит товару, поэтому одинакова во всех подборках и списках. */
@@ -206,7 +250,12 @@
           gift(12, 'want', ''),
           gift(13, 'someday', ''),
           gift(5, 'someday', '')
-        ], COVERS[1].grad),
+        ], COVERS[1].grad,
+          'Собираю на **14 марта**. Если сомневаетесь — берите из верхнего приоритета,\n' +
+          'там всё точно в тему.\n\n' +
+          '- размер одежды S, обувь 38\n' +
+          '- люблю всё для дома и ухода за собой',
+          'свечи с сильным запахом\nсладости и шоколад\nодежда без размера\nсувениры «на память»'),
         seedList('l2', 'Новый год', 'tree-pine', '31 декабря', good(7).img, [
           gift(31, 'top', ''),
           gift(2, 'top', ''),
@@ -400,7 +449,7 @@
       store.sheet = name; store.openMenu = null;
     },
     isWideSheet: function () {
-      return ['person', 'filters', 'cover', 'list'].indexOf(store.sheet) >= 0;
+      return ['person', 'filters', 'cover', 'list', 'listsettings'].indexOf(store.sheet) >= 0;
     },
     closeSheet: function () { store.sheet = null; },
 
@@ -556,6 +605,18 @@
       toast('Вишлист «' + title + '» создан');
     },
     copyLink: function () { toast('Ссылка скопирована'); },
+
+    /* ── настройки вишлиста ── */
+    openListSettings: function () { store.sheet = 'listsettings'; store.openMenu = null; },
+    setListIcon: function (k) { currentList.value.icon = k; },
+    mdToHtml: mdToHtml,
+    htmlToMd: htmlToMd,
+    /* стоп-лист хранится строками, показываем списком */
+    stopItems: function (l) {
+      return ((l && l.stop) || '').split(/\r?\n/)
+        .map(function (x) { return x.trim(); })
+        .filter(function (x) { return x.length > 0; });
+    },
 
     /* ── обложка шапки списка ── */
     covers: COVERS,
@@ -1216,7 +1277,7 @@
         '        <list-icon :name="currentList.icon" :size="40" />',
         '      </span>',
         '    </div>',
-        '    <button class="hero__cover" @click="A.openSheet(\'cover\')"><ui-icon name="image" :size="15" /> Обложка</button>',
+        '    <button class="hero__cover" @click="A.openListSettings()"><ui-icon name="settings" :size="15" /> Настройки</button>',
         '    <div class="hero__body">',
         '      <span class="hero__emoji"><list-icon :name="currentList.icon" :size="24" /></span>',
         '      <div class="hero__head">',
@@ -1225,9 +1286,9 @@
         '      </div>',
         '      <div class="hero__meta">',
         '        <span><ui-icon name="gift" /> {{ currentList.items.length }} подарков</span>',
-        '        <span><ui-icon name="eye" /> 34 просмотра</span>',
         '        <span v-if="reserved"><ui-icon name="lock" /> {{ reserved }} занято</span>',
         '      </div>',
+        '      <hero-desc :list="currentList" />',
         '      <div class="hero__acts">',
         '        <button class="hact hact--primary" @click="A.openSheet(\'gift\')"><ui-icon name="plus" :size="18" /> Добавить подарок</button>',
         '        <button class="hact" @click="A.openSheet(\'share\')"><ui-icon name="share-2" /> Поделиться</button>',
@@ -1492,7 +1553,6 @@
         '      <div class="card__note">{{ [18,11,9][n] || 5 }} переходов</div>',
         '    </gift-row>',
         '  </div>',
-        '  <div class="locknote locknote--wide" style="margin-top:16px"><ui-icon name="lock" :size="15" /> Вы не видите, кто именно смотрел или резервировал — сюрприз сохраняется.</div>',
         '</div>'
       ].join('')
     });
@@ -1524,6 +1584,7 @@
         '        <span><ui-icon name="gift" /> {{ list.items.length }} подарков</span>',
         '        <span><ui-icon name="lock" /> {{ taken }} уже разобрано</span>',
         '      </div>',
+        '      <hero-desc :list="list" />',
         '      <div class="hero__acts">',
         '        <button class="hact hact--primary" @click="A.copyLink()"><ui-icon name="link" :size="18" /> Скопировать ссылку</button>',
         '      </div>',
@@ -1531,6 +1592,7 @@
         '  </header>',
 
         '  <p class="sharenote"><ui-icon name="lock" :size="15" /> Аня не увидит, кто и что зарезервировал</p>',
+
 
         '  <div v-for="g in groups" :key="g.key" class="tier">',
         '    <div class="tier__label"><tier-icon :tier="g.key" /> {{ g.label }} <span class="tier__count">{{ g.items.length }}</span></div>',
@@ -1846,6 +1908,173 @@
       ].join('')
     });
 
+    /* ── описание в шапке: две строки, дальше «Показать» ── */
+    app.component('HeroDesc', {
+      props: ['list'],
+      setup: function () { return { A: A, store: store }; },
+      data: function () { return { over: false }; },
+      mounted: function () { this.measure(); },
+      updated: function () { this.measure(); },
+      methods: {
+        /* ссылку показываем, только если текст правда не поместился */
+        measure: function () {
+          var n = this.$refs.text;
+          if (!n) { this.over = false; return; }
+          var over = n.scrollHeight - n.clientHeight > 2;
+          if (over !== this.over) this.over = over;
+        }
+      },
+      computed: {
+        html: function () { return A.mdToHtml(this.list.desc || ''); },
+        stop: function () { return A.stopItems(this.list); },
+        show: function () { return !!this.list.desc || this.stop.length > 0; }
+      },
+      template: [
+        '<div v-if="show" class="hero__desc">',
+        '  <div v-if="list.desc" ref="text" class="hero__desc-text" v-html="html"></div>',
+        '  <div class="hero__desc-links">',
+        '    <button v-if="over" class="hero__desc-more" @click="A.openSheet(\'desc\')">Показать</button>',
+        '    <button v-if="stop.length" class="hero__stop" @click="A.openSheet(\'stop\')">',
+        '      <ui-icon name="ban" :size="14" /> Стоп-лист',
+        '    </button>',
+        '  </div>',
+        '</div>'
+      ].join('')
+    });
+
+    /* ── модалка: полное описание ── */
+    app.component('SheetDesc', {
+      setup: function () { return { A: A, currentList: currentList }; },
+      template: [
+        '<div>',
+        '  <div class="sheet__title">О вишлисте <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
+        '  <div class="wl-desc" v-html="A.mdToHtml(currentList.desc)"></div>',
+        '</div>'
+      ].join('')
+    });
+
+    /* ── модалка: стоп-лист ── */
+    app.component('SheetStop', {
+      setup: function () { return { A: A, currentList: currentList }; },
+      template: [
+        '<div>',
+        '  <div class="sheet__title">Пожалуйста, не дарите <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
+        '  <p class="sheet__hint">Список от владельца вишлиста — этого лучше избежать.</p>',
+        '  <div class="stoplist__items">',
+        '    <span v-for="(x,n) in A.stopItems(currentList)" :key="n" class="stoplist__x">',
+        '      <ui-icon name="ban" :size="13" /> {{ x }}',
+        '    </span>',
+        '  </div>',
+        '</div>'
+      ].join('')
+    });
+
+    /* ── редактор описания ──
+       Пишем визуально, храним markdown: панель форматирует выделение,
+       а «Markdown» показывает тот же текст исходником. */
+    app.component('MdEditor', {
+      props: ['value'],
+      emits: ['update'],
+      data: function () { return { raw: false }; },
+      mounted: function () { this.paint(); },
+      methods: {
+        paint: function () {
+          if (this.$refs.rich) this.$refs.rich.innerHTML = A.mdToHtml(this.value || '');
+        },
+        cmd: function (name, arg) {
+          this.$refs.rich.focus();
+          try { document.execCommand(name, false, arg || null); } catch (e) {}
+          this.sync();
+        },
+        addLink: function () {
+          var url = window.prompt ? window.prompt('Ссылка', 'https://') : '';
+          if (url) this.cmd('createLink', url);
+        },
+        sync: function () { this.$emit('update', A.htmlToMd(this.$refs.rich.innerHTML)); },
+        toggleRaw: function () {
+          this.raw = !this.raw;
+          if (!this.raw) this.$nextTick(this.paint);
+        }
+      },
+      template: [
+        '<div class="mde">',
+        '  <div class="mde__bar">',
+        '    <button class="mde__b" @click="cmd(\'bold\')" title="Жирный"><ui-icon name="bold" :size="15" /></button>',
+        '    <button class="mde__b" @click="cmd(\'italic\')" title="Курсив"><ui-icon name="italic" :size="15" /></button>',
+        '    <button class="mde__b" @click="cmd(\'insertUnorderedList\')" title="Список"><ui-icon name="list" :size="15" /></button>',
+        '    <button class="mde__b" @click="addLink()" title="Ссылка"><ui-icon name="link" :size="15" /></button>',
+        '    <button class="mde__raw" :class="{\'is-on\':raw}" @click="toggleRaw()">Markdown</button>',
+        '  </div>',
+        '  <div v-show="!raw" ref="rich" class="mde__rich" contenteditable="true"',
+        '       @input="sync" @blur="sync" data-ph="Пара слов для дарителя…"></div>',
+        '  <textarea v-show="raw" class="mde__raw-area" :value="value"',
+        '            @input="$emit(\'update\', $event.target.value)"></textarea>',
+        '</div>'
+      ].join('')
+    });
+
+    /* ── модалка: настройки вишлиста ── */
+    app.component('SheetListSettings', {
+      setup: function () { return { store: store, A: A, currentList: currentList }; },
+      template: [
+        '<div>',
+        '  <div class="sheet__title">Настройки вишлиста <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Название</div>',
+        '    <div class="personname">',
+        '      <span class="listava" :style="A.heroStyle(currentList)"><list-icon :name="currentList.icon" :size="24" /></span>',
+        '      <input class="field" v-model="currentList.title" placeholder="День рождения">',
+        '    </div>',
+        '  </div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Значок</div>',
+        '    <div class="tagcloud">',
+        '      <button v-for="i in A.listIcons" :key="i.key" class="emochip" :class="{\'is-on\':currentList.icon===i.key}"',
+        '              @click="A.setListIcon(i.key)" :title="i.label" :aria-label="i.label"><list-icon :name="i.key" :size="21" /></button>',
+        '    </div>',
+        '  </div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Дата <span class="sheet__count">необязательно</span></div>',
+        '    <input class="field" v-model="currentList.date" placeholder="14 марта">',
+        '  </div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Описание <span class="sheet__count">увидят дарители</span></div>',
+        '    <md-editor :value="currentList.desc" @update="currentList.desc = $event" />',
+        '  </div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label"><ui-icon name="ban" :size="14" /> Стоп-лист <span class="sheet__count">по одному пункту в строке</span></div>',
+        '    <textarea class="field field--area" v-model="currentList.stop"',
+        '              placeholder="свечи с сильным запахом&#10;сладости&#10;сувениры «на память»"></textarea>',
+        '    <p class="sheet__note">Дарители увидят это списком — что дарить точно не стоит.</p>',
+        '  </div>',
+
+        '  <div class="sheet__row">',
+        '    <div class="sheet__label">Обложка</div>',
+        '    <div class="covergrid">',
+        '      <button v-for="c in A.covers" :key="c.key" class="coverswatch" :class="{\'is-on\':A.isCoverGrad(c.grad)}" :style="{backgroundImage:c.grad}" @click="A.setCoverGrad(c.grad)">',
+        '        <span v-if="A.isCoverGrad(c.grad)" class="coverswatch__on">✓</span>',
+        '      </button>',
+        '    </div>',
+        '    <label class="coverdrop">',
+        '      <input type="file" accept="image/*" @change="A.pickCoverFile($event)">',
+        '      <span class="coverdrop__ic"><ui-icon name="image" :size="22" /></span>',
+        '      <span>Загрузить свою картинку<em>JPG или PNG, лучше горизонтальную</em></span>',
+        '    </label>',
+        '  </div>',
+
+        '  <div class="sheet__foot">',
+        '    <button class="btn btn--ghost" :class="{\'is-off\':!currentList.bg}" @click="A.clearCover()">Убрать картинку</button>',
+        '    <button class="btn btn--green" @click="A.closeSheet()">Готово</button>',
+        '  </div>',
+        '</div>'
+      ].join('')
+    });
+
     /* ── модалка: обложка шапки списка ── */
     /* ── модалка: новый список ── */
     app.component('SheetList', {
@@ -2039,6 +2268,9 @@
         '        <sheet-person v-else-if="store.sheet===\'person\'" />',
         '        <sheet-filters v-else-if="store.sheet===\'filters\'" />',
         '        <sheet-cover v-else-if="store.sheet===\'cover\'" />',
+        '        <sheet-list-settings v-else-if="store.sheet===\'listsettings\'" />',
+        '        <sheet-desc v-else-if="store.sheet===\'desc\'" />',
+        '        <sheet-stop v-else-if="store.sheet===\'stop\'" />',
         '        <sheet-list v-else-if="store.sheet===\'list\'" />',
         '        <add-gift-form v-else-if="store.sheet===\'gift\'" />',
         '      </div>',

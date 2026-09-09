@@ -90,9 +90,9 @@ a:hover{text-decoration:underline}
   display:flex; align-items:flex-start; pointer-events:none;
 }
 .hero__fancard{
-  width:74px; height:74px; flex:none; margin-left:-26px;
+  width:94px; height:94px; flex:none; margin-left:-30px;
   border-radius:14px; overflow:hidden; background:#fff;
-  box-shadow:0 10px 26px rgba(0,0,0,.3), 0 0 0 3px rgba(255,255,255,.92);
+  box-shadow:0 10px 26px rgba(0,0,0,.26), 0 0 0 3px rgba(255,255,255,.8);
   transition:transform .3s cubic-bezier(.34,1.56,.64,1);
 }
 /* лёгкий разворот, чтобы стопка выглядела разложенной от руки */
@@ -148,8 +148,8 @@ a:hover{text-decoration:underline}
   content:"•"; margin:0 9px; opacity:.45; font-weight:700;
 }
 .hero__acts{
-  display:flex; flex-wrap:nowrap; gap:8px; margin-top:18px;
-  padding-right:150px;   /* место под кнопку «Обложка» в правом нижнем углу */
+  display:flex; flex-wrap:nowrap; gap:8px; margin-top:28px;
+  padding-right:150px;   /* место под кнопку «Настройки» в правом нижнем углу */
 }
 .hero__acts .hact{ flex:none; }
 .hact{
@@ -726,7 +726,6 @@ a:hover{text-decoration:underline}
 .tag--mine{background:rgba(39,174,96,.12);color:var(--green)}
 
 .locknote{font-size:12px;color:var(--muted);margin-top:4px}
-.locknote--wide{margin-top:16px;padding:12px 14px;background:var(--mint);border-radius:var(--radius);font-size:13px}
 
 /* ───────────────────────── chip-in pool ───────────────────────── */
 .pool{display:flex;flex-direction:column;gap:20px}
@@ -1004,3 +1003,90 @@ a:hover{text-decoration:underline}
 .dd__item--add, .wl-rail__open{ gap:7px; }
 .flink{ display:inline-flex; align-items:center; gap:5px; }
 .coverdrop__ic{ display:flex; color:var(--muted); }
+
+/* ── описание в шапке: две строки, остальное по «Показать» ── */
+.hero__desc{
+  position:relative; z-index:2; max-width:62%; margin:18px 0 0;
+}
+/* «Показать» и стоп-лист — строкой под текстом */
+.hero__desc-links{ display:flex; align-items:center; gap:12px; margin-top:6px; }
+.hero__desc-text{
+  font-size:13px; line-height:1.45; color:rgba(255,255,255,.86);
+  text-shadow:0 1px 8px rgba(0,0,0,.35);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.hero__desc-text p{ margin:0; display:inline; }
+.hero__desc-text p + p::before{ content:" "; }
+.hero__desc-text ul{ margin:0; padding:0; list-style:none; display:inline; }
+.hero__desc-text li{ display:inline; }
+.hero__desc-text li + li::before{ content:" · "; opacity:.6; }
+.hero__desc-text b{ color:#fff; }
+.hero__desc-more{
+  flex:none; padding:0; color:#fff; font-size:13px; font-weight:700;
+  text-decoration:underline; text-underline-offset:3px; white-space:nowrap;
+}
+.hero__desc-more:hover{ opacity:.8; }
+/* стоп-лист — такая же текстовая ссылка, отличается цветом и иконкой */
+.hero__stop{
+  display:inline-flex; align-items:center; gap:6px; flex:none; padding:0;
+  color:#ffbcbc; font-size:13px; font-weight:700;
+  text-decoration:underline; text-underline-offset:3px; white-space:nowrap;
+  transition:color .15s;
+}
+.hero__stop:hover{ color:#fff; }
+
+/* ───────────────────── описание вишлиста и стоп-лист ───────────────────── */
+.wl-desc{
+  max-width:62ch; margin:0;
+  font-size:14.5px; line-height:1.6; color:var(--muted);
+}
+.wl-desc p{ margin:0 0 8px; }
+.wl-desc p:last-child{ margin-bottom:0; }
+.wl-desc b{ color:var(--ink); font-weight:700; }
+.wl-desc ul{ margin:8px 0 10px; padding-left:18px; }
+.wl-desc li{ margin:3px 0; }
+.wl-desc a{ color:var(--green); text-decoration:underline; }
+
+/* стоп-лист: перечень того, чего дарить не нужно */
+.stoplist{ margin:0 0 26px; }
+.stoplist__head{
+  display:flex; align-items:center; gap:8px; margin-bottom:10px;
+  font-size:13px; font-weight:700; color:var(--red);
+}
+.stoplist__items{ display:flex; flex-wrap:wrap; gap:8px; }
+.stoplist__x{
+  display:inline-flex; align-items:center; gap:7px;
+  height:34px; padding:0 14px; border-radius:999px;
+  background:rgba(247,79,79,.09); color:var(--red);
+  font-size:13px; font-weight:600;
+}
+
+/* ───────────────────── редактор описания ───────────────────── */
+.field--area{ height:auto; min-height:96px; padding:11px 14px; line-height:1.5; resize:vertical; }
+.mde{ border:2px solid var(--line); border-radius:var(--radius); overflow:hidden; background:#fff; }
+.mde__bar{
+  display:flex; align-items:center; gap:4px;
+  padding:6px 8px; border-bottom:1px solid var(--line); background:var(--field);
+}
+.mde__b{
+  width:30px; height:30px; border-radius:8px; color:var(--muted);
+  display:flex; align-items:center; justify-content:center;
+}
+.mde__b:hover{ background:rgba(0,0,0,.07); color:var(--ink); }
+.mde__raw{
+  margin-left:auto; height:26px; padding:0 10px; border-radius:7px;
+  font-size:11px; font-weight:700; letter-spacing:.03em; color:var(--muted);
+}
+.mde__raw:hover{ background:rgba(0,0,0,.07); color:var(--ink); }
+.mde__raw.is-on{ background:var(--ink); color:#fff; }
+.mde__rich, .mde__raw-area{
+  display:block; width:100%; min-height:110px; padding:12px 14px;
+  font-size:14px; line-height:1.55; color:var(--ink); border:0; resize:vertical;
+}
+.mde__rich:focus, .mde__raw-area:focus{ outline:none; }
+.mde__rich:empty::before{ content:attr(data-ph); color:var(--muted-2); }
+.mde__rich b{ font-weight:700; }
+.mde__rich ul{ margin:6px 0; padding-left:20px; }
+.mde__raw-area{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; }
+.sheet__note{ margin-top:8px; font-size:12px; color:var(--muted-2); line-height:1.45; }
+.sheet__label{ display:flex; align-items:center; gap:6px; }
