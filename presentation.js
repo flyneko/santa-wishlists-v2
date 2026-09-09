@@ -57,10 +57,12 @@
             at: function () { return nth('.wl-rail__row--list', 1); },
             run: function () { var i = st.lists.findIndex(function (l) { return l.id === st.currentListId; });
                                A.setList(st.lists[(i + 1) % st.lists.length].id); A.spotlight('rail'); } },
-          { hint: 'Кнопка «Обложка» — можно поставить свой файл или готовый фон',
+          { hint: 'Кнопка «Обложка» — свой файл или готовый фон для шапки',
             at: function () { return el('.hero__cover'); },
             run: function () { A.openSheet('cover'); } },
-          { hint: 'Закрываем окно', at: function () { return el('.sheet__x'); }, run: function () { A.closeSheet(); } }
+          { hint: 'Выбираем фон — шапка вишлиста меняется сразу',
+            at: function () { return nth('.covergrid .coverswatch', 3); },
+            run: function () { A.setCoverGrad(A.covers[3].grad); A.closeSheet(); } }
         ] },
 
       { route: 'lists', nav: 'Делюсь и вижу отклик', pre: function () { base(); st.listView = 'activity'; },
@@ -74,9 +76,8 @@
             run: function () { st.period = st.period === '7' ? '30' : '7'; A.spotlight('screen'); } },
           { hint: 'Видно, чем интересуются, но имён дарителей нет — сюрприз цел',
             at: function () { return nth('.rlist .rrow'); } },
-          { hint: 'Возвращаемся к списку подарков',
-            at: function () { return nth('.hero__acts .hact', 3); },
-            run: function () { A.toggleActivity(); } }
+          { hint: 'Кнопка «Активность» переключает вид туда и обратно',
+            at: function () { return nth('.hero__acts .hact', 3); } }
         ] }
     ] },
 
@@ -124,18 +125,15 @@
         title: 'Добавляю человека сам — и подбираю по его анкете',
         sub: 'Пол, возраст и интересы сразу превращаются в фильтры. Подборку потом можно показать тем, кто дарит вместе с вами.',
         steps: [
-          { hint: 'Открываем список людей',
+          { hint: 'Открываем список: тут и игроки, и добавленные вручную',
             at: function () { return el('.whoswitch'); },
             run: function () { A.toggleMenu('who'); } },
           { hint: 'Шестерёнка есть только у своих людей — открывает их анкету',
             at: function () { return el('.dd__cog'); },
             run: function () { A.editPerson(st.recipients.find(function (r) { return r.id === 'r3'; })); } },
-          { hint: 'Отмечаем интерес — по нему подстроятся фильтры идей',
+          { hint: 'Отмечаем интерес «кухня» и сохраняем анкету',
             at: function () { return nth('.tagcloud .tagchip', 4); },
-            run: function () { A.togglePersonInterest('кухня'); } },
-          { hint: 'Сохраняем анкету',
-            at: function () { return nth('.sheet__foot .btn', 1); },
-            run: function () { A.createPerson(); } },
+            run: function () { A.togglePersonInterest('кухня'); A.createPerson(); } },
           { hint: 'Фильтры встали сами: пол, возраст и интересы из анкеты',
             at: function () { return el('.ideafilters'); }, run: function () { A.spotlight('screen'); } }
         ] },
@@ -169,7 +167,7 @@
         steps: [
           { hint: 'Видно, сколько собрано и кто уже скинулся',
             at: function () { return el('.pot'); } },
-          { hint: 'Выбираем свою сумму',
+          { hint: 'Выбираем сумму вклада — 500 ₽',
             at: function () { return nth('.presets button', 2); },
             run: function () { A.setPledge(500); } },
           { hint: 'Вносим — только теперь подарок закрепляется за нами',
@@ -191,10 +189,10 @@
                         total: 0, flipX: false, flipY: false,
                         /* прямоугольник подсвеченного элемента: вокруг него затемняем всё */
                         hl: null });
-  var timer = null, run = 0;
+  var timer = null, follow = null, run = 0;
 
   function stop() {
-    run++; clearTimeout(timer);
+    run++; clearTimeout(timer); clearTimeout(follow);
     demo.on = false; demo.down = false; demo.step = -1; demo.hint = ''; demo.hl = null;
   }
   /* Цель может оказаться за пределами окна — сначала подкручиваем к ней страницу,
@@ -214,9 +212,10 @@
   }
 
   function moveTo(node) {
-    if (!node || !node.getBoundingClientRect) { demo.hl = null; return false; }
+    if (!node || !node.getBoundingClientRect) return false;
     var r = node.getBoundingClientRect();
-    if (!r.width && !r.height) { demo.hl = null; return false; }
+    /* элемент могли убрать по ходу шага — оставляем последнюю рамку, а не гасим */
+    if (!r.width && !r.height) return false;
     demo.x = r.left + r.width / 2;
     demo.y = r.top + r.height / 2;
     var pad = 8;
@@ -246,14 +245,23 @@
         }, 900);
         return;
       }
+      clearTimeout(follow);
       var s = steps[k];
       demo.step = k;
       demo.hint = s.hint;
       var node = s.at ? s.at() : null;
+      if (!node) demo.hl = null;
       var scroll = ensureVisible(node);
       timer = setTimeout(function () {
         if (my !== run) return;
         moveTo(node);                       /* координаты берём уже после прокрутки */
+        /* следим за целью до конца шага: докрутка и подгрузка ленты
+           двигают вёрстку и после первого замера */
+        (function keepUp() {
+          if (my !== run) return;
+          moveTo(node);
+          follow = setTimeout(keepUp, 90);
+        })();
         timer = setTimeout(function () {
           if (my !== run) return;
           demo.down = true;
