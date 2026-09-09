@@ -10,7 +10,6 @@
   /* ───────── подготовка состояния ───────── */
   function base() {
     st.sheet = null; st.openMenu = null; st.spot = null;
-    st.listView = 'items';
     st.ideasFor = 'self';
     A.clearIdeasFilter();
   }
@@ -67,7 +66,7 @@
             run: function () { A.setCoverGrad(A.covers[3].grad); A.closeSheet(); } }
         ] },
 
-      { route: 'lists', nav: 'Делюсь и вижу отклик', pre: function () { base(); st.listView = 'activity'; },
+      { route: 'lists', nav: 'Делюсь и вижу отклик', pre: function () { base(); A.openSheet('activity'); },
         title: 'Я вижу, что вишлист работает — но не вижу, кто что сделал',
         sub: 'Просмотры, переходы в магазины и сколько уже разобрано. Без имён: сюрприз остаётся сюрпризом.',
         steps: [
@@ -77,9 +76,7 @@
             at: function () { return nth('.segbar .seg', 1); },
             run: function () { st.period = st.period === '7' ? '30' : '7'; A.spotlight('screen'); } },
           { hint: 'Видно, чем интересуются, но имён дарителей нет — сюрприз цел',
-            at: function () { return nth('.rlist .rrow'); } },
-          { hint: 'Кнопка «Активность» переключает вид туда и обратно',
-            at: function () { return nth('.hero__acts .hact', 3); } }
+            at: function () { return nth('.rlist .rrow'); } }
         ] }
     ] },
 
@@ -357,7 +354,7 @@
       '      <div class="deck__stagebody" :class="{\'deck__stagebody--rail\':showRail}">',
       '        <transition name="fade" mode="out-in">',
       '          <div class="screen" :class="{\'is-spot\':store.spot===\'screen\'}"',
-      '               :key="store.route + store.listView + store.ideasFor"><component :is="screenComp" /></div>',
+      '               :key="store.route + store.ideasFor"><component :is="screenComp" /></div>',
       '        </transition>',
       '        <wishlist-rail v-if="showRail" />',
       '      </div>',

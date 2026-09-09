@@ -195,7 +195,6 @@
       buyItem: null,        /* подарок, покупку которого подтверждают */
       toastMsg: '',
       period: '30',
-      surprise: true,
       ideasFor: 'self',
       asideCollapsed: false,
       openMenu: null,             // who | raillist
@@ -234,7 +233,6 @@
 
       me: { name: 'Evgeniy Unknown' },
       currentListId: 'l1',
-      listView: 'items',          // items | activity — тело страницы «Мои списки»
       drag: null,                 // { kind:'wish'|'pick', from, over } — перетаскивание в панели
       spot: null,                 // подсвеченная область в презентации: screen | rail
 
@@ -437,7 +435,6 @@
     money: money,
     toast: toast,
     go: function (route) {
-      if (route === 'lists') store.listView = 'items';
       store.route = route;
       store.sheet = null;
       if (WL.onNavigate) WL.onNavigate(route);
@@ -457,7 +454,7 @@
       store.sheet = name; store.openMenu = null;
     },
     isWideSheet: function () {
-      return ['person', 'filters', 'cover', 'list', 'listsettings'].indexOf(store.sheet) >= 0;
+      return ['person', 'filters', 'cover', 'list', 'listsettings', 'activity'].indexOf(store.sheet) >= 0;
     },
     closeSheet: function () { store.sheet = null; store.buyItem = null; },
 
@@ -564,9 +561,6 @@
       store.sheet = null; toast('Удалено из вишлиста');
     },
 
-    toggleActivity: function () {
-      store.listView = store.listView === 'activity' ? 'items' : 'activity';
-    },
     setList: function (id) {
       store.currentListId = id; store.sheet = null; store.openMenu = null;
       toast('Вишлист: ' + currentList.value.title);
@@ -614,7 +608,6 @@
       var id = uid();
       store.lists.push(seedList(id, title, n.icon, n.date.trim(), good(6).img, [], n.grad));
       store.currentListId = id;
-      store.listView = 'items';
       store.sheet = null;
       /* с экрана идей остаёмся на месте: новый вишлист сразу виден в панели справа */
       if (store.route !== 'ideas') A.go('lists');
@@ -1343,14 +1336,12 @@
         '      <div class="hero__acts">',
         '        <button class="hact hact--primary" @click="A.openSheet(\'gift\')"><ui-icon name="plus" :size="18" /> Добавить подарок</button>',
         '        <button class="hact" @click="A.openSheet(\'share\')"><ui-icon name="share-2" /> Поделиться</button>',
-        '        <button class="hact" :class="{\'is-on\':store.listView===\'activity\'}" @click="A.toggleActivity()"><ui-icon name="bar-chart-3" /> Активность</button>',
+        '        <button class="hact hact--icon" @click="A.openSheet(\'activity\')" title="Активность" aria-label="Активность"><ui-icon name="bar-chart-3" :size="18" /></button>',
         '      </div>',
         '    </div>',
         '  </header>',
 
 
-        '  <activity-body v-if="store.listView===\'activity\'" />',
-        '  <template v-else>',
         '  <div v-for="g in A.filledTiers(tierGroups)" :key="g.key" class="tier">',
         '    <div class="tier__label"><tier-icon :tier="g.key" /> {{ g.label }} <span class="tier__count">{{ g.items.length }}</span></div>',
         '    <div class="grid grid--4">',
@@ -1382,7 +1373,6 @@
         '      <button class="btn btn--ghost btn--sm" @click="A.go(\'ideas\')">Смотреть идеи</button>',
         '    </div>',
         '  </div>',
-        '  </template>',
         '</div>'
       ].join('')
     });
@@ -1578,7 +1568,7 @@
     app.component('ActivityBody', {
       setup: function () {
         return {
-          store: store, currentList: currentList, reservedCount: reservedCount,
+          store: store, A: A, currentList: currentList, reservedCount: reservedCount,
           notReserved: computed(function () {
             return currentList.value.items.filter(function (i) { return !i.reserved; }).slice(0, 3);
           })
@@ -1586,8 +1576,9 @@
       },
       template: [
         '<div>',
+        '  <div class="sheet__title">Активность вишлиста <button class="sheet__x" @click="A.closeSheet()">✕</button></div>',
         '  <div class="screen__head">',
-        '    <div class="tier__label">Активность вишлиста</div>',
+        '    <div class="sheet__hint">Без имён: кто смотрел и кто зарезервировал — не видно.</div>',
         '    <div class="segbar">',
         '      <button class="seg" :class="{\'is-on\':store.period===\'30\'}" @click="store.period=\'30\'">30 дней</button>',
         '      <button class="seg" :class="{\'is-on\':store.period===\'7\'}" @click="store.period=\'7\'">7 дней</button>',
@@ -1962,7 +1953,6 @@
         '    <div class="copyfield">mysanta.ru/wishlist/{{ store.currentListId }}</div>',
         '    <button class="btn btn--green btn--sm btn--block" @click="A.copyLink()">Копировать ссылку</button>',
         '  </div>',
-        '  <label class="check"><input type="checkbox" v-model="store.surprise"> Режим сюрприза — вижу только счётчики, не вещи</label>',
         '</div>'
       ].join('')
     });
@@ -2352,6 +2342,7 @@
         '        <sheet-desc v-else-if="store.sheet===\'desc\'" />',
         '        <sheet-stop v-else-if="store.sheet===\'stop\'" />',
         '        <sheet-bought v-else-if="store.sheet===\'bought\'" />',
+        '        <activity-body v-else-if="store.sheet===\'activity\'" />',
         '        <sheet-list v-else-if="store.sheet===\'list\'" />',
         '        <add-gift-form v-else-if="store.sheet===\'gift\'" />',
         '      </div>',

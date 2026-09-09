@@ -93,17 +93,12 @@ a:hover{text-decoration:underline}
   width:94px; height:94px; flex:none; margin-left:-30px;
   border-radius:14px; overflow:hidden; background:#fff;
   box-shadow:0 10px 26px rgba(0,0,0,.26), 0 0 0 3px rgba(255,255,255,.8);
-  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
 }
 /* лёгкий разворот, чтобы стопка выглядела разложенной от руки */
 .hero__fancard.i0{ transform:rotate(-8deg) translateY(16px); z-index:4; }
 .hero__fancard.i1{ transform:rotate(-3deg) translateY(6px); z-index:3; }
 .hero__fancard.i2{ transform:rotate(3deg) translateY(12px); z-index:2; }
 .hero__fancard.i3{ transform:rotate(8deg) translateY(2px) translateX(14px); z-index:1; }
-.hero:hover .hero__fancard.i0{ transform:rotate(-11deg) translateY(10px); }
-.hero:hover .hero__fancard.i1{ transform:rotate(-4deg) translateY(0); }
-.hero:hover .hero__fancard.i2{ transform:rotate(4deg) translateY(6px); }
-.hero:hover .hero__fancard.i3{ transform:rotate(11deg) translateY(-4px) translateX(14px); }
 .hero__fancard .thumb{ border-radius:0; }
 /* пустой вишлист — вместо веера крупный значок */
 .hero__fanempty{
@@ -166,6 +161,8 @@ a:hover{text-decoration:underline}
   backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.26);
   transition:background .15s;
 }
+/* статистика — редкое действие, ей хватает значка */
+.hact--icon{ width:38px; padding:0; justify-content:center; }
 .hact:hover{ background:rgba(255,255,255,.3); }
 .hact.is-on{ background:#fff; color:var(--ink); border-color:#fff; }
 .hact--primary{ background:#fff; color:var(--ink); border-color:#fff; }
@@ -610,7 +607,8 @@ a:hover{text-decoration:underline}
 }
 /* шестерёнка — только у своих людей */
 .dd__cog{
-  flex:none; width:28px; height:28px; border-radius:8px;
+  /* прижата к кружку выбора: отрицательный отступ съедает gap строки */
+  flex:none; width:26px; height:26px; margin-right:-6px; border-radius:8px;
   color:var(--muted-2); display:flex; align-items:center; justify-content:center;
   transition:background .15s, color .15s;
 }
@@ -766,6 +764,11 @@ a:hover{text-decoration:underline}
 
 /* ───────────────────────── activity stats ───────────────────────── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:12px 0 28px}
+/* та же статистика в окне — плотнее, чтобы уместиться по ширине */
+.sheet .stats{ gap:10px; margin:0 0 22px; }
+.sheet .stat{ padding:13px 14px; }
+.sheet .stat__num{ font-size:1.45rem; margin:4px 0 8px; }
+.sheet .stat__label{ font-size:11px; letter-spacing:.03em; }
 .stat{background:var(--page);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
 .stat__label{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .stat__num{font-size:1.8rem;font-weight:700;letter-spacing:-.02em;margin:6px 0 10px;font-variant-numeric:tabular-nums}
@@ -788,8 +791,6 @@ a:hover{text-decoration:underline}
   background:var(--field);border-radius:var(--radius);padding:11px 13px;
   font-size:13px;color:var(--ink);word-break:break-all;
 }
-.check{display:flex;align-items:center;gap:11px;font-size:14px;font-weight:600;cursor:pointer;padding:4px 0}
-.check input{width:18px;height:18px;accent-color:var(--green)}
 
 /* ───────────────────────── responsive ───────────────────────── */
 @media (max-width:1100px){ .grid--4{grid-template-columns:repeat(3,1fr)} }

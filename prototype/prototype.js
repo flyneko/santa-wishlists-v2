@@ -68,7 +68,7 @@
       '    <div class="ms-body" :class="{\'ms-body--rail\':showRail}">',
       '      <div>',
       '        <transition name="fade" mode="out-in">',
-      '          <div :key="store.route + store.ideasFor + store.listView"><component :is="screenComp" /></div>',
+      '          <div :key="store.route + store.ideasFor"><component :is="screenComp" /></div>',
       '        </transition>',
       '      </div>',
       '      <wishlist-rail v-if="showRail" />',
