@@ -32,6 +32,11 @@ jobs:
           # иначе Pages прогоняет всё через Jekyll и выкидывает пути с подчёркиванием
           touch _site/.nojekyll
 
+      # Имена файлов постоянные, поэтому браузер держит их в кэше и после деплоя
+      # показывает старую сборку. Метка версии в ссылке снимает вопрос.
+      - name: Stamp assets with the commit sha
+        run: python3 .github/cache-bust.py _site "${GITHUB_SHA::8}"
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

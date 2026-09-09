@@ -2363,6 +2363,11 @@
       setup: function () { return { store: store, A: A }; },
       template: [
         '<div>',
+        /* затемнение под выпадающим меню: на телефоне оно раскрывается нижним листом,
+           и без подложки непонятно, что страница под ним ждёт выбора */
+        '  <transition name="fade">',
+        '    <div v-if="store.openMenu" class="ddscrim" @click="A.closeMenu()"></div>',
+        '  </transition>',
         '  <transition name="slide">',
         '    <div v-if="store.sheet" class="sheet-backdrop" @click.self="A.closeSheet()">',
         '      <div class="sheet" :class="{\'sheet--wide\':A.isWideSheet()}">',
